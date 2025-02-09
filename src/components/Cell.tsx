@@ -1,13 +1,12 @@
 import { FC } from 'react';
 
 type CellProps = {
-  position: [number, number];
   piece: string | null;
   onClick: () => void;
   isSelected: boolean;
 }
 
-export const Cell: FC<CellProps> = ({ position, piece, onClick, isSelected }) => {
+export const Cell: FC<CellProps> = ({ piece, onClick, isSelected }) => {
   return (
     <div
       onClick={onClick}

@@ -38,7 +38,6 @@ function App() {
             row.map((piece, j) => (
               <Cell
                 key={`${i}-${j}`}
-                position={[i, j]}
                 piece={piece}
                 onClick={() => handleCellClick(i, j)}
                 isSelected={selectedCell ? selectedCell[0] === i && selectedCell[1] === j : false}
