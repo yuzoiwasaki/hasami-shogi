@@ -13,35 +13,35 @@ function App() {
   } = useHasamiShogi();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800 font-japanese">
+        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-4 sm:mb-8 text-gray-800 font-japanese">
           はさみ将棋
         </h1>
         
-        <div className="text-center mb-8 p-4 bg-white rounded-lg shadow-md">
+        <div className="text-center mb-4 sm:mb-8 p-3 sm:p-4 bg-white rounded-lg shadow-md">
           {winner ? (
-            <div className="space-y-4">
-              <div className="text-2xl font-bold text-gray-800">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="text-xl sm:text-2xl font-bold text-gray-800">
                 {getPlayerName(winner)}（{winner}）の勝利！
               </div>
               <button
                 onClick={resetGame}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg
-                  transition duration-200 ease-in-out transform hover:scale-105 shadow-lg"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
+                  transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
               >
                 もう一度プレイ
               </button>
             </div>
           ) : (
-            <div className="text-xl text-gray-700">
+            <div className="text-lg sm:text-xl text-gray-700">
               現在の手番: <span className="font-bold">{getPlayerName(currentPlayer)}（{currentPlayer}）</span>
             </div>
           )}
         </div>
 
         <div className="flex justify-center">
-          <div className="bg-white p-6 rounded-xl shadow-lg">
+          <div className="bg-white p-2 sm:p-6 rounded-xl shadow-lg w-full sm:w-auto">
             <div className="grid grid-cols-9 gap-px bg-gray-200">
               {board.map((row, i) =>
                 row.map((piece, j) => (

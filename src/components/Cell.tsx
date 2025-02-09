@@ -11,13 +11,13 @@ export const Cell: FC<CellProps> = ({ piece, onClick, isSelected }) => {
     <div
       onClick={onClick}
       className={`
-        w-14 h-14 flex items-center justify-center
+        w-8 h-8 sm:w-14 sm:h-14 flex items-center justify-center
         ${isSelected 
           ? 'bg-yellow-200 hover:bg-yellow-300' 
           : 'bg-yellow-50 hover:bg-yellow-100'
         }
         ${piece ? 'cursor-pointer' : 'cursor-default'}
-        text-2xl font-bold text-gray-800
+        text-lg sm:text-2xl font-bold text-gray-800
         transition-colors duration-200 ease-in-out
         border border-gray-300
       `}
