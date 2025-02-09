@@ -55,15 +55,13 @@ function App() {
         return;
       }
 
-      // 次のプレイヤーが動けるかチェック
-      const nextPlayer = currentPlayer === '歩' ? 'と' : '歩';
+      // 現在のプレイヤーが動けるかチェック
       let hasValidMove = false;
 
       // 盤面全体をチェック
       for (let i = 0; i < 9 && !hasValidMove; i++) {
         for (let j = 0; j < 9 && !hasValidMove; j++) {
-          if (board[i][j] === nextPlayer) {
-            // 上下左右の各方向について、1マスから8マス先までチェック
+          if (board[i][j] === currentPlayer) {
             const directions = [
               [-1, 0], // 上
               [1, 0],  // 下
@@ -72,24 +70,22 @@ function App() {
             ];
 
             for (const [dx, dy] of directions) {
-              // 各方向に1マスから8マスまでチェック
               for (let distance = 1; distance < 9; distance++) {
                 const newRow = i + dx * distance;
                 const newCol = j + dy * distance;
 
-                // 盤面の範囲内かチェック
                 if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) {
-                  break; // この方向はもう調べる必要なし
+                  break;
                 }
 
-                // 移動先に駒があれば、この方向はもう調べる必要なし
                 if (board[newRow][newCol] !== null) {
                   break;
                 }
 
-                // 移動可能な場所を見つけた
                 if (!hasObstacleInPath(i, j, newRow, newCol)) {
                   hasValidMove = true;
+                  break;
+                } else {
                   break;
                 }
               }
@@ -100,9 +96,10 @@ function App() {
         }
       }
 
-      // 次のプレイヤーが動けない場合
+      // 現在のプレイヤーが動けない場合
       if (!hasValidMove) {
-        setWinner(currentPlayer);
+        // 現在のプレイヤーの相手が勝利
+        setWinner(currentPlayer === '歩' ? 'と' : '歩');
       }
     };
 
