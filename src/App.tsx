@@ -175,7 +175,8 @@ function App() {
     // 移動可能かチェック（縦・横の直線移動のみ許可）
     const isValidMove = (
       (selectedRow === row || selectedCol === col) && // 縦か横の移動
-      !hasObstacleInPath(selectedRow, selectedCol, row, col) // 経路に他の駒がないこと
+      !hasObstacleInPath(selectedRow, selectedCol, row, col) && // 経路に他の駒がないこと
+      board[row][col] === null // 移動先のマスが空いていること
     );
 
     if (isValidMove) {
