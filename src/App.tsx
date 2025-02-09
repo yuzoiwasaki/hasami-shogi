@@ -115,14 +115,37 @@ function App() {
     const checkHorizontal = () => {
       // 左方向
       if (col >= 2) {
-        if (board[row][col-1] === opponent && board[row][col-2] === piece) {
-          capturedPositions.push([row, col-1]);
+        let captureCount = 0;
+        let currentCol = col - 1;
+        // 左方向に進みながら、相手の駒が連続している間チェック
+        while (currentCol >= 0 && board[row][currentCol] === opponent) {
+          captureCount++;
+          currentCol--;
+        }
+        // 自分の駒で挟めているかチェック
+        if (captureCount > 0 && currentCol >= 0 && board[row][currentCol] === piece) {
+          // 間にある全ての相手の駒を捕獲位置に追加
+          for (let i = 1; i <= captureCount; i++) {
+            capturedPositions.push([row, col - i]);
+          }
         }
       }
+
       // 右方向
       if (col <= 6) {
-        if (board[row][col+1] === opponent && board[row][col+2] === piece) {
-          capturedPositions.push([row, col+1]);
+        let captureCount = 0;
+        let currentCol = col + 1;
+        // 右方向に進みながら、相手の駒が連続している間チェック
+        while (currentCol < 9 && board[row][currentCol] === opponent) {
+          captureCount++;
+          currentCol++;
+        }
+        // 自分の駒で挟めているかチェック
+        if (captureCount > 0 && currentCol < 9 && board[row][currentCol] === piece) {
+          // 間にある全ての相手の駒を捕獲位置に追加
+          for (let i = 1; i <= captureCount; i++) {
+            capturedPositions.push([row, col + i]);
+          }
         }
       }
     };
@@ -131,14 +154,37 @@ function App() {
     const checkVertical = () => {
       // 上方向
       if (row >= 2) {
-        if (board[row-1][col] === opponent && board[row-2][col] === piece) {
-          capturedPositions.push([row-1, col]);
+        let captureCount = 0;
+        let currentRow = row - 1;
+        // 上方向に進みながら、相手の駒が連続している間チェック
+        while (currentRow >= 0 && board[currentRow][col] === opponent) {
+          captureCount++;
+          currentRow--;
+        }
+        // 自分の駒で挟めているかチェック
+        if (captureCount > 0 && currentRow >= 0 && board[currentRow][col] === piece) {
+          // 間にある全ての相手の駒を捕獲位置に追加
+          for (let i = 1; i <= captureCount; i++) {
+            capturedPositions.push([row - i, col]);
+          }
         }
       }
+
       // 下方向
       if (row <= 6) {
-        if (board[row+1][col] === opponent && board[row+2][col] === piece) {
-          capturedPositions.push([row+1, col]);
+        let captureCount = 0;
+        let currentRow = row + 1;
+        // 下方向に進みながら、相手の駒が連続している間チェック
+        while (currentRow < 9 && board[currentRow][col] === opponent) {
+          captureCount++;
+          currentRow++;
+        }
+        // 自分の駒で挟めているかチェック
+        if (captureCount > 0 && currentRow < 9 && board[currentRow][col] === piece) {
+          // 間にある全ての相手の駒を捕獲位置に追加
+          for (let i = 1; i <= captureCount; i++) {
+            capturedPositions.push([row + i, col]);
+          }
         }
       }
     };
