@@ -30,6 +30,48 @@ function App() {
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<'●' | '○'>('●');
 
+  // はさみ判定を行う関数
+  const checkCaptures = (row: number, col: number, piece: string) => {
+    const opponent = piece === '●' ? '○' : '●';
+    let capturedPositions: [number, number][] = [];
+
+    // 横方向のチェック
+    const checkHorizontal = () => {
+      // 左方向
+      if (col >= 2) {
+        if (board[row][col-1] === opponent && board[row][col-2] === piece) {
+          capturedPositions.push([row, col-1]);
+        }
+      }
+      // 右方向
+      if (col <= 6) {
+        if (board[row][col+1] === opponent && board[row][col+2] === piece) {
+          capturedPositions.push([row, col+1]);
+        }
+      }
+    };
+
+    // 縦方向のチェック
+    const checkVertical = () => {
+      // 上方向
+      if (row >= 2) {
+        if (board[row-1][col] === opponent && board[row-2][col] === piece) {
+          capturedPositions.push([row-1, col]);
+        }
+      }
+      // 下方向
+      if (row <= 6) {
+        if (board[row+1][col] === opponent && board[row+2][col] === piece) {
+          capturedPositions.push([row+1, col]);
+        }
+      }
+    };
+
+    checkHorizontal();
+    checkVertical();
+    return capturedPositions;
+  };
+
   const handleCellClick = (row: number, col: number) => {
     // 駒が選択されていない場合
     if (!selectedCell) {
@@ -58,8 +100,15 @@ function App() {
     if (isValidMove) {
       // 移動を実行
       const newBoard = [...board.map(row => [...row])];
-      newBoard[row][col] = board[selectedRow][selectedCol];
+      const movingPiece = board[selectedRow][selectedCol];
+      newBoard[row][col] = movingPiece;
       newBoard[selectedRow][selectedCol] = null;
+
+      // はさみ判定と駒を取る処理
+      const capturedPositions = checkCaptures(row, col, movingPiece!);
+      capturedPositions.forEach(([captureRow, captureCol]) => {
+        newBoard[captureRow][captureCol] = null;
+      });
 
       setBoard(newBoard);
       setSelectedCell(null);
