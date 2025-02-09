@@ -22,41 +22,41 @@ function Cell({ position, piece, onClick, isSelected }: CellProps) {
 function App() {
   const [board, setBoard] = useState<(string | null)[][]>(
     Array(9).fill(null).map((_, row) => {
-      if (row === 0) return Array(9).fill('●');  // 黒駒
-      if (row === 8) return Array(9).fill('○');  // 白駒
+      if (row === 0) return Array(9).fill('と');
+      if (row === 8) return Array(9).fill('歩');
       return Array(9).fill(null);
     })
   );
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
-  const [currentPlayer, setCurrentPlayer] = useState<'●' | '○'>('●');
-  const [winner, setWinner] = useState<'●' | '○' | null>(null);
+  const [currentPlayer, setCurrentPlayer] = useState<'歩' | 'と'>('歩');
+  const [winner, setWinner] = useState<'歩' | 'と' | null>(null);
 
   // 勝利判定
   useEffect(() => {
     const checkWinner = () => {
       // 黒と白の駒の数を数える
-      let blackPieces = 0;
-      let whitePieces = 0;
+      let fuPieces = 0;
+      let toPieces = 0;
 
       for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
-          if (board[i][j] === '●') blackPieces++;
-          if (board[i][j] === '○') whitePieces++;
+          if (board[i][j] === '歩') fuPieces++;
+          if (board[i][j] === 'と') toPieces++;
         }
       }
 
       // どちらかの駒が全て取られている場合
-      if (blackPieces === 0) {
-        setWinner('○');
+      if (fuPieces === 0) {
+        setWinner('と');
         return;
       }
-      if (whitePieces === 0) {
-        setWinner('●');
+      if (toPieces === 0) {
+        setWinner('歩');
         return;
       }
 
       // 次のプレイヤーが動けるかチェック
-      const nextPlayer = currentPlayer === '●' ? '○' : '●';
+      const nextPlayer = currentPlayer === '歩' ? 'と' : '歩';
       let hasValidMove = false;
 
       // 盤面全体をチェック
@@ -111,7 +111,7 @@ function App() {
 
   // はさみ判定を行う関数
   const checkCaptures = (row: number, col: number, piece: string) => {
-    const opponent = piece === '●' ? '○' : '●';
+    const opponent = piece === '歩' ? 'と' : '歩';
     let capturedPositions: [number, number][] = [];
 
     // 横方向のチェック
@@ -194,7 +194,7 @@ function App() {
 
       setBoard(newBoard);
       setSelectedCell(null);
-      setCurrentPlayer(currentPlayer === '●' ? '○' : '●');
+      setCurrentPlayer(currentPlayer === '歩' ? 'と' : '歩');
     }
   };
 
@@ -218,13 +218,18 @@ function App() {
 
   const resetGame = () => {
     setBoard(Array(9).fill(null).map((_, row) => {
-      if (row === 0) return Array(9).fill('●');
-      if (row === 8) return Array(9).fill('○');
+      if (row === 0) return Array(9).fill('と');
+      if (row === 8) return Array(9).fill('歩');
       return Array(9).fill(null);
     }));
     setSelectedCell(null);
-    setCurrentPlayer('●');
+    setCurrentPlayer('歩');
     setWinner(null);
+  }
+
+  // プレイヤー名を取得する関数
+  const getPlayerName = (piece: '歩' | 'と') => {
+    return piece === '歩' ? '先手' : '後手';
   }
 
   return (
@@ -234,7 +239,7 @@ function App() {
         {winner ? (
           <div>
             <div className="text-xl font-bold mb-2">
-              {winner}の勝利！
+              {getPlayerName(winner)}（{winner}）の勝利！
             </div>
             <button
               onClick={resetGame}
@@ -244,7 +249,7 @@ function App() {
             </button>
           </div>
         ) : (
-          <div>現在の手番: {currentPlayer}</div>
+          <div>現在の手番: {getPlayerName(currentPlayer)}（{currentPlayer}）</div>
         )}
       </div>
       <div className="max-w-fit mx-auto">
