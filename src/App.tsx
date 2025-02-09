@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type CellProps = {
   position: [number, number];
@@ -29,6 +29,85 @@ function App() {
   );
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<'●' | '○'>('●');
+  const [winner, setWinner] = useState<'●' | '○' | null>(null);
+
+  // 勝利判定
+  useEffect(() => {
+    const checkWinner = () => {
+      // 黒と白の駒の数を数える
+      let blackPieces = 0;
+      let whitePieces = 0;
+
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (board[i][j] === '●') blackPieces++;
+          if (board[i][j] === '○') whitePieces++;
+        }
+      }
+
+      // どちらかの駒が全て取られている場合
+      if (blackPieces === 0) {
+        setWinner('○');
+        return;
+      }
+      if (whitePieces === 0) {
+        setWinner('●');
+        return;
+      }
+
+      // 次のプレイヤーが動けるかチェック
+      const nextPlayer = currentPlayer === '●' ? '○' : '●';
+      let hasValidMove = false;
+
+      // 盤面全体をチェック
+      for (let i = 0; i < 9 && !hasValidMove; i++) {
+        for (let j = 0; j < 9 && !hasValidMove; j++) {
+          if (board[i][j] === nextPlayer) {
+            // 上下左右の各方向について、1マスから8マス先までチェック
+            const directions = [
+              [-1, 0], // 上
+              [1, 0],  // 下
+              [0, -1], // 左
+              [0, 1]   // 右
+            ];
+
+            for (const [dx, dy] of directions) {
+              // 各方向に1マスから8マスまでチェック
+              for (let distance = 1; distance < 9; distance++) {
+                const newRow = i + dx * distance;
+                const newCol = j + dy * distance;
+
+                // 盤面の範囲内かチェック
+                if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) {
+                  break; // この方向はもう調べる必要なし
+                }
+
+                // 移動先に駒があれば、この方向はもう調べる必要なし
+                if (board[newRow][newCol] !== null) {
+                  break;
+                }
+
+                // 移動可能な場所を見つけた
+                if (!hasObstacleInPath(i, j, newRow, newCol)) {
+                  hasValidMove = true;
+                  break;
+                }
+              }
+
+              if (hasValidMove) break;
+            }
+          }
+        }
+      }
+
+      // 次のプレイヤーが動けない場合
+      if (!hasValidMove) {
+        setWinner(currentPlayer);
+      }
+    };
+
+    checkWinner();
+  }, [board, currentPlayer]);
 
   // はさみ判定を行う関数
   const checkCaptures = (row: number, col: number, piece: string) => {
@@ -73,6 +152,8 @@ function App() {
   };
 
   const handleCellClick = (row: number, col: number) => {
+    if (winner) return; // ゲーム終了後は操作を無効化
+
     // 駒が選択されていない場合
     if (!selectedCell) {
       // クリックしたマスに現在のプレイヤーの駒がある場合のみ選択可能
@@ -134,11 +215,36 @@ function App() {
     return false;
   };
 
+  const resetGame = () => {
+    setBoard(Array(9).fill(null).map((_, row) => {
+      if (row === 0) return Array(9).fill('●');
+      if (row === 8) return Array(9).fill('○');
+      return Array(9).fill(null);
+    }));
+    setSelectedCell(null);
+    setCurrentPlayer('●');
+    setWinner(null);
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <h1 className="text-3xl font-bold text-center mb-8">はさみ将棋</h1>
       <div className="text-center mb-4">
-        現在の手番: {currentPlayer}
+        {winner ? (
+          <div>
+            <div className="text-xl font-bold mb-2">
+              {winner}の勝利！
+            </div>
+            <button
+              onClick={resetGame}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              もう一度プレイ
+            </button>
+          </div>
+        ) : (
+          <div>現在の手番: {currentPlayer}</div>
+        )}
       </div>
       <div className="max-w-fit mx-auto">
         <div className="grid grid-cols-9 gap-0">
