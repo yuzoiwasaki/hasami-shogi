@@ -1,5 +1,5 @@
 # はさみ将棋
-React + TypeScript + Tailwind CSS で作られたはさみ将棋アプリケーションです
+React + TypeScript + Tailwind CSS で作られたはさみ将棋アプリケーションです。
 
 [https://hasami-shogi.dev](https://hasami-shogi.dev)
 
@@ -41,3 +41,8 @@ React + TypeScript + Tailwind CSS で作られたはさみ将棋アプリケー�
 1. 先手（歩）から開始
 2. 交互に1手ずつ指す
 3. 勝利条件を満たすまで継続
+
+## バージョン
+
+### 0.1.0
+最低限の機能を実装
