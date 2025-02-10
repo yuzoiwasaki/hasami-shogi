@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 
 type Player = '歩' | 'と';
 
+const createInitialBoard = (): (string | null)[][] => {
+  return Array(9).fill(null).map((_, row) => {
+    if (row === 0) return Array(9).fill('と');
+    if (row === 8) return Array(9).fill('歩');
+    return Array(9).fill(null);
+  });
+};
+
 export const useHasamiShogi = () => {
-  const [board, setBoard] = useState<(string | null)[][]>(
-    Array(9).fill(null).map((_, row) => {
-      if (row === 0) return Array(9).fill('と');
-      if (row === 8) return Array(9).fill('歩');
-      return Array(9).fill(null);
-    })
-  );
+  const [board, setBoard] = useState<(string | null)[][]>(createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [winner, setWinner] = useState<Player | null>(null);
@@ -207,11 +209,7 @@ export const useHasamiShogi = () => {
   };
 
   const resetGame = () => {
-    setBoard(Array(9).fill(null).map((_, row) => {
-      if (row === 0) return Array(9).fill('と');
-      if (row === 8) return Array(9).fill('歩');
-      return Array(9).fill(null);
-    }));
+    setBoard(createInitialBoard());
     setSelectedCell(null);
     setCurrentPlayer('歩');
     setWinner(null);
