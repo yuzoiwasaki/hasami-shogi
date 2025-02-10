@@ -170,33 +170,55 @@ const checkCaptures = (
   return [...horizontalCaptures, ...verticalCaptures];
 };
 
+// 移動に関連する関数群
+const hasObstacleInPath = (
+  board: (string | null)[][],
+  fromRow: number,
+  fromCol: number,
+  toRow: number,
+  toCol: number
+): boolean => {
+  if (fromRow === toRow) {  // 横移動
+    const start = Math.min(fromCol, toCol);
+    const end = Math.max(fromCol, toCol);
+    for (let col = start + 1; col < end; col++) {
+      if (board[fromRow][col] !== null) return true;
+    }
+  } else if (fromCol === toCol) {  // 縦移動
+    const start = Math.min(fromRow, toRow);
+    const end = Math.max(fromRow, toRow);
+    for (let row = start + 1; row < end; row++) {
+      if (board[row][fromCol] !== null) return true;
+    }
+  }
+  return false;
+};
+
+const isValidMove = (
+  board: (string | null)[][],
+  fromRow: number,
+  fromCol: number,
+  toRow: number,
+  toCol: number
+): boolean => {
+  return (
+    (fromRow === toRow || fromCol === toCol) &&
+    !hasObstacleInPath(board, fromRow, fromCol, toRow, toCol) &&
+    board[toRow][toCol] === null
+  );
+};
+
 export const useHasamiShogi = () => {
   const [board, setBoard] = useState<(string | null)[][]>(createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [winner, setWinner] = useState<Player | null>(null);
 
-  // 移動経路に他の駒がないかチェック
-  const hasObstacleInPath = (fromRow: number, fromCol: number, toRow: number, toCol: number): boolean => {
-    if (fromRow === toRow) {  // 横移動
-      const start = Math.min(fromCol, toCol);
-      const end = Math.max(fromCol, toCol);
-      for (let col = start + 1; col < end; col++) {
-        if (board[fromRow][col] !== null) return true;
-      }
-    } else if (fromCol === toCol) {  // 縦移動
-      const start = Math.min(fromRow, toRow);
-      const end = Math.max(fromRow, toRow);
-      for (let row = start + 1; row < end; row++) {
-        if (board[row][fromCol] !== null) return true;
-      }
-    }
-    return false;
-  };
-
   // 勝利判定
   useEffect(() => {
-    const winner = checkWinner(board, currentPlayer, hasObstacleInPath);
+    const winner = checkWinner(board, currentPlayer, (fromRow, fromCol, toRow, toCol) => 
+      hasObstacleInPath(board, fromRow, fromCol, toRow, toCol)
+    );
     if (winner) setWinner(winner);
   }, [board, currentPlayer]);
 
@@ -217,13 +239,7 @@ export const useHasamiShogi = () => {
       return;
     }
 
-    const isValidMove = (
-      (selectedRow === row || selectedCol === col) &&
-      !hasObstacleInPath(selectedRow, selectedCol, row, col) &&
-      board[row][col] === null
-    );
-
-    if (isValidMove) {
+    if (isValidMove(board, selectedRow, selectedCol, row, col)) {
       const newBoard = [...board.map(row => [...row])];
       const movingPiece = board[selectedRow][selectedCol];
       newBoard[row][col] = movingPiece;
