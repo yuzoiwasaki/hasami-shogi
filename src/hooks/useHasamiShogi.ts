@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Player, Board, Position, GameState, GameError, GameErrorCode } from '../types';
 
 const createInitialBoard = (): Board => {
@@ -268,8 +268,8 @@ export const useHasamiShogi = () => {
     if (winner) setWinner(winner);
   }, [board, currentPlayer]);
 
-  // メモ化されたコールバック関数
-  const handleCellClick = useCallback((row: number, col: number) => {
+  const handleCellClick = (row: number, col: number) => {
+    // エラーをリセット
     setError(null);
 
     if (winner) {
@@ -315,31 +315,25 @@ export const useHasamiShogi = () => {
       setSelectedCell(null);
       setCurrentPlayer(currentPlayer === '歩' ? 'と' : '歩');
     }
-  }, [board, selectedCell, currentPlayer, winner]);
+  };
 
-  const resetGame = useCallback(() => {
+  const resetGame = () => {
     setBoard(createInitialBoard());
     setSelectedCell(null);
     setCurrentPlayer('歩');
     setWinner(null);
-    setError(null);
-  }, []);
+  };
 
-  const getPlayerName = useCallback((piece: Player) => {
+  const getPlayerName = (piece: Player) => {
     return piece === '歩' ? '先手' : '後手';
-  }, []);
+  };
 
-  // 現在の状態をメモ化
-  const gameState = useMemo(() => ({
+  return {
     board,
     selectedCell,
     currentPlayer,
     winner,
     error,
-  }), [board, selectedCell, currentPlayer, winner, error]);
-
-  return {
-    ...gameState,
     handleCellClick,
     resetGame,
     getPlayerName,
