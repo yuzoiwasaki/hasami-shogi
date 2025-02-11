@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Player, Board, Position, GameState } from '../types';
 
-type Player = '歩' | 'と';
-
-const createInitialBoard = (): (string | null)[][] => {
+const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
     if (row === 0) return Array(9).fill('と');
     if (row === 8) return Array(9).fill('歩');
@@ -11,7 +10,7 @@ const createInitialBoard = (): (string | null)[][] => {
 };
 
 // 勝利判定に関連する関数群
-const countPieces = (board: (string | null)[][]): { fuPieces: number; toPieces: number } => {
+const countPieces = (board: Board): { fuPieces: number; toPieces: number } => {
   let fuPieces = 0;
   let toPieces = 0;
 
@@ -26,7 +25,7 @@ const countPieces = (board: (string | null)[][]): { fuPieces: number; toPieces: 
 };
 
 const hasValidMove = (
-  board: (string | null)[][],
+  board: Board,
   currentPlayer: Player,
   hasObstacleInPath: (fromRow: number, fromCol: number, toRow: number, toCol: number) => boolean
 ): boolean => {
@@ -56,7 +55,7 @@ const hasValidMove = (
 };
 
 const checkWinner = (
-  board: (string | null)[][],
+  board: Board,
   currentPlayer: Player,
   hasObstacleInPath: (fromRow: number, fromCol: number, toRow: number, toCol: number) => boolean
 ): Player | null => {
@@ -74,7 +73,7 @@ const checkWinner = (
 
 // はさみ判定に関連する関数群
 const checkHorizontalCaptures = (
-  board: (string | null)[][],
+  board: Board,
   row: number,
   col: number,
   piece: string,
@@ -116,7 +115,7 @@ const checkHorizontalCaptures = (
 };
 
 const checkVerticalCaptures = (
-  board: (string | null)[][],
+  board: Board,
   row: number,
   col: number,
   piece: string,
@@ -158,7 +157,7 @@ const checkVerticalCaptures = (
 };
 
 const checkCaptures = (
-  board: (string | null)[][],
+  board: Board,
   row: number,
   col: number,
   piece: string
@@ -172,7 +171,7 @@ const checkCaptures = (
 
 // 移動に関連する関数群
 const hasObstacleInPath = (
-  board: (string | null)[][],
+  board: Board,
   fromRow: number,
   fromCol: number,
   toRow: number,
@@ -195,7 +194,7 @@ const hasObstacleInPath = (
 };
 
 const isValidMove = (
-  board: (string | null)[][],
+  board: Board,
   fromRow: number,
   fromCol: number,
   toRow: number,
@@ -209,8 +208,8 @@ const isValidMove = (
 };
 
 export const useHasamiShogi = () => {
-  const [board, setBoard] = useState<(string | null)[][]>(createInitialBoard());
-  const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
+  const [board, setBoard] = useState<Board>(createInitialBoard());
+  const [selectedCell, setSelectedCell] = useState<Position | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [winner, setWinner] = useState<Player | null>(null);
 

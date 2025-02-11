@@ -1,10 +1,5 @@
 import { FC } from 'react';
-
-type CellProps = {
-  piece: string | null;
-  onClick: () => void;
-  isSelected: boolean;
-}
+import { CellProps } from '../types';
 
 export const Cell: FC<CellProps> = ({ piece, onClick, isSelected }) => {
   return (
