@@ -1,7 +1,7 @@
-import { FC } from 'react';
+import { FC, memo } from 'react';
 import { CellProps } from '../types';
 
-export const Cell: FC<CellProps> = ({ piece, onClick, isSelected }) => {
+export const Cell: FC<CellProps> = memo(({ piece, onClick, isSelected }) => {
   return (
     <div
       onClick={onClick}
@@ -20,4 +20,6 @@ export const Cell: FC<CellProps> = ({ piece, onClick, isSelected }) => {
       {piece}
     </div>
   );
-}; 
+});
+
+Cell.displayName = 'Cell'; 
