@@ -21,15 +21,6 @@ export enum GameErrorCode {
   INVALID_POSITION = 'INVALID_POSITION',
 }
 
-// ゲームの状態を表す型
-export type GameState = {
-  board: Board;
-  currentPlayer: Player;
-  selectedCell: Position | null;
-  winner: Player | null;
-  error: GameError | null;
-};
-
 // Cellコンポーネントのprops型
 export type CellProps = {
   piece: string | null;

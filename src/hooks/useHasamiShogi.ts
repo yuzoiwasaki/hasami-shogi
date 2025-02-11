@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Player, Board, Position, GameState, GameError, GameErrorCode } from '../types';
+import { Player, Board, Position, GameError, GameErrorCode } from '../types';
 
 const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
