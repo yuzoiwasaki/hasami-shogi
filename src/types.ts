@@ -15,7 +15,6 @@ export type GameError = {
 
 // エラーコードの定義
 export enum GameErrorCode {
-  GAME_ENDED = 'GAME_ENDED',
   INVALID_TURN = 'INVALID_TURN',
 }
 

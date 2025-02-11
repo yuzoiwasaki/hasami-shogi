@@ -210,7 +210,6 @@ const isValidMove = (
 // エラー処理関連の関数
 const createGameError = (code: GameErrorCode): GameError => {
   const messages: Record<GameErrorCode, string> = {
-    [GameErrorCode.GAME_ENDED]: 'ゲームは既に終了しています',
     [GameErrorCode.INVALID_TURN]: '自分の手番ではありません',
   };
 
@@ -236,11 +235,9 @@ export const useHasamiShogi = () => {
   }, [board, currentPlayer]);
 
   const handleCellClick = (row: number, col: number) => {
-    // エラーをリセット
     setError(null);
 
     if (winner) {
-      setError(createGameError(GameErrorCode.GAME_ENDED));
       return;
     }
 
