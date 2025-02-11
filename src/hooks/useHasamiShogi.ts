@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Player, Board, Position, GameState } from '../types';
+import { Player, Board, Position, GameState, GameError, GameErrorCode } from '../types';
 
 const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
@@ -207,11 +207,58 @@ const isValidMove = (
   );
 };
 
+// エラー処理関連の関数
+const createGameError = (code: GameErrorCode): GameError => {
+  const messages: Record<GameErrorCode, string> = {
+    [GameErrorCode.INVALID_MOVE]: '無効な移動です',
+    [GameErrorCode.INVALID_TURN]: '自分の手番ではありません',
+    [GameErrorCode.GAME_ENDED]: 'ゲームは既に終了しています',
+    [GameErrorCode.INVALID_POSITION]: '無効な位置が指定されました',
+  };
+
+  return {
+    code,
+    message: messages[code],
+  };
+};
+
+const validateMove = (
+  board: Board,
+  fromPos: Position,
+  toPos: Position,
+  currentPlayer: Player
+): GameError | null => {
+  const [fromRow, fromCol] = fromPos;
+  const [toRow, toCol] = toPos;
+
+  // 盤面の範囲チェック
+  if (!isValidPosition(fromRow, fromCol) || !isValidPosition(toRow, toCol)) {
+    return createGameError(GameErrorCode.INVALID_POSITION);
+  }
+
+  // 移動元の駒が現在のプレイヤーの駒かチェック
+  if (board[fromRow][fromCol] !== currentPlayer) {
+    return createGameError(GameErrorCode.INVALID_TURN);
+  }
+
+  // 移動先が空いているかと、有効な移動かチェック
+  if (!isValidMove(board, fromRow, fromCol, toRow, toCol)) {
+    return createGameError(GameErrorCode.INVALID_MOVE);
+  }
+
+  return null;
+};
+
+const isValidPosition = (row: number, col: number): boolean => {
+  return row >= 0 && row < 9 && col >= 0 && col < 9;
+};
+
 export const useHasamiShogi = () => {
   const [board, setBoard] = useState<Board>(createInitialBoard());
   const [selectedCell, setSelectedCell] = useState<Position | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [winner, setWinner] = useState<Player | null>(null);
+  const [error, setError] = useState<GameError | null>(null);
 
   // 勝利判定
   useEffect(() => {
@@ -222,12 +269,27 @@ export const useHasamiShogi = () => {
   }, [board, currentPlayer]);
 
   const handleCellClick = (row: number, col: number) => {
-    if (winner) return;
+    // エラーをリセット
+    setError(null);
+
+    if (winner) {
+      setError(createGameError(GameErrorCode.GAME_ENDED));
+      return;
+    }
 
     if (!selectedCell) {
       if (board[row][col] === currentPlayer) {
         setSelectedCell([row, col]);
+      } else if (board[row][col] !== null) {
+        setError(createGameError(GameErrorCode.INVALID_TURN));
       }
+      return;
+    }
+
+    const moveError = validateMove(board, selectedCell, [row, col], currentPlayer);
+    if (moveError) {
+      setError(moveError);
+      setSelectedCell(null);
       return;
     }
 
@@ -271,6 +333,7 @@ export const useHasamiShogi = () => {
     selectedCell,
     currentPlayer,
     winner,
+    error,
     handleCellClick,
     resetGame,
     getPlayerName,

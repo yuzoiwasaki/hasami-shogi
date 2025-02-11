@@ -7,6 +7,7 @@ function App() {
     selectedCell,
     currentPlayer,
     winner,
+    error,
     handleCellClick,
     resetGame,
     getPlayerName,
@@ -39,6 +40,13 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="text-center mb-4 p-2 bg-red-100 text-red-700 rounded-lg">
+            {error.message}
+          </div>
+        )}
 
         <div className="flex justify-center">
           <div className="bg-white p-2 sm:p-6 rounded-xl shadow-lg w-full sm:w-auto">
