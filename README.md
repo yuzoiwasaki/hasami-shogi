@@ -3,7 +3,7 @@ React + TypeScript + Tailwind CSS で作られたはさみ将棋アプリケー�
 
 [https://hasami-shogi.dev](https://hasami-shogi.dev)
 
-<img src="https://github.com/yuzoiwasaki/hasami-shogi/blob/main/src/assets/screenshot.png" width="50%">
+<img src="docs/screenshot.png" width="50%">
 
 ## ゲームのルール
 
