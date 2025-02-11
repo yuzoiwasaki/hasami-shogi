@@ -15,10 +15,8 @@ export type GameError = {
 
 // エラーコードの定義
 export enum GameErrorCode {
-  INVALID_MOVE = 'INVALID_MOVE',
-  INVALID_TURN = 'INVALID_TURN',
   GAME_ENDED = 'GAME_ENDED',
-  INVALID_POSITION = 'INVALID_POSITION',
+  INVALID_TURN = 'INVALID_TURN',
 }
 
 // Cellコンポーネントのprops型

@@ -210,47 +210,14 @@ const isValidMove = (
 // エラー処理関連の関数
 const createGameError = (code: GameErrorCode): GameError => {
   const messages: Record<GameErrorCode, string> = {
-    [GameErrorCode.INVALID_MOVE]: '無効な移動です',
-    [GameErrorCode.INVALID_TURN]: '自分の手番ではありません',
     [GameErrorCode.GAME_ENDED]: 'ゲームは既に終了しています',
-    [GameErrorCode.INVALID_POSITION]: '無効な位置が指定されました',
+    [GameErrorCode.INVALID_TURN]: '自分の手番ではありません',
   };
 
   return {
     code,
     message: messages[code],
   };
-};
-
-const validateMove = (
-  board: Board,
-  fromPos: Position,
-  toPos: Position,
-  currentPlayer: Player
-): GameError | null => {
-  const [fromRow, fromCol] = fromPos;
-  const [toRow, toCol] = toPos;
-
-  // 盤面の範囲チェック
-  if (!isValidPosition(fromRow, fromCol) || !isValidPosition(toRow, toCol)) {
-    return createGameError(GameErrorCode.INVALID_POSITION);
-  }
-
-  // 移動元の駒が現在のプレイヤーの駒かチェック
-  if (board[fromRow][fromCol] !== currentPlayer) {
-    return createGameError(GameErrorCode.INVALID_TURN);
-  }
-
-  // 移動先が空いているかと、有効な移動かチェック
-  if (!isValidMove(board, fromRow, fromCol, toRow, toCol)) {
-    return createGameError(GameErrorCode.INVALID_MOVE);
-  }
-
-  return null;
-};
-
-const isValidPosition = (row: number, col: number): boolean => {
-  return row >= 0 && row < 9 && col >= 0 && col < 9;
 };
 
 export const useHasamiShogi = () => {
@@ -286,13 +253,6 @@ export const useHasamiShogi = () => {
       return;
     }
 
-    const moveError = validateMove(board, selectedCell, [row, col], currentPlayer);
-    if (moveError) {
-      setError(moveError);
-      setSelectedCell(null);
-      return;
-    }
-
     const [selectedRow, selectedCol] = selectedCell;
 
     if (selectedRow === row && selectedCol === col) {
@@ -314,6 +274,8 @@ export const useHasamiShogi = () => {
       setBoard(newBoard);
       setSelectedCell(null);
       setCurrentPlayer(currentPlayer === '歩' ? 'と' : '歩');
+    } else {
+      setSelectedCell(null);
     }
   };
 
