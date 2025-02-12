@@ -27,5 +27,10 @@ describe('はさみ将棋のロジック', () => {
       // 横移動（隣に駒があるため不可）
       expect(isValidMove(board, 8, 0, 8, 1)).toBe(false);
     });
+
+    it('斜め移動は不可', () => {
+      const board = createInitialBoard();
+      expect(isValidMove(board, 8, 0, 7, 1)).toBe(false);
+    });
   });
 }); 
