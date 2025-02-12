@@ -1,1 +1,5 @@
-export { createInitialBoard } from './useHasamiShogi'; 
+export { 
+  createInitialBoard,
+  isValidMove,
+  hasObstacleInPath,
+} from './useHasamiShogi'; 

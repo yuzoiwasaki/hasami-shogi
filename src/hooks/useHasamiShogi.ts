@@ -170,7 +170,7 @@ const checkCaptures = (
 };
 
 // 移動に関連する関数群
-const hasObstacleInPath = (
+export const hasObstacleInPath = (
   board: Board,
   fromRow: number,
   fromCol: number,
@@ -193,7 +193,7 @@ const hasObstacleInPath = (
   return false;
 };
 
-const isValidMove = (
+export const isValidMove = (
   board: Board,
   fromRow: number,
   fromCol: number,
