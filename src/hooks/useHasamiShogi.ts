@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Player, Board, Position, GameError, GameErrorCode } from '../types';
 
-const createInitialBoard = (): Board => {
+export const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
     if (row === 0) return Array(9).fill('と');
     if (row === 8) return Array(9).fill('歩');

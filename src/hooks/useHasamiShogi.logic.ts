@@ -1,0 +1,1 @@
+export { createInitialBoard } from './useHasamiShogi'; 
