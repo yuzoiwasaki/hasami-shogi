@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialBoard } from './useHasamiShogi.logic';
 import { isValidMove } from './useHasamiShogi.logic';
+import { hasObstacleInPath } from './useHasamiShogi.logic';
 
 describe('はさみ将棋のロジック', () => {
   describe('初期盤面', () => {
@@ -31,6 +32,15 @@ describe('はさみ将棋のロジック', () => {
     it('斜め移動は不可', () => {
       const board = createInitialBoard();
       expect(isValidMove(board, 8, 0, 7, 1)).toBe(false);
+    });
+
+    it('駒を飛び越えられない', () => {
+      const board = Array(9).fill(null).map(() => Array(9).fill(null));
+      board[4][0] = '歩';  // 途中に駒を配置
+      
+      // 縦方向の確認
+      expect(hasObstacleInPath(board, 8, 0, 0, 0)).toBe(true);  // 障害物があるのでtrue
+      expect(hasObstacleInPath(board, 8, 0, 5, 0)).toBe(false); // 障害物がないのでfalse
     });
   });
 }); 
