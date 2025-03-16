@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ref, set, onValue, update, get } from 'firebase/database';
+import { ref, set, onValue, get } from 'firebase/database';
 import { db } from '../firebase/config';
 import { GameRoom } from '../types';
 
