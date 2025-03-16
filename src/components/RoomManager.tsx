@@ -3,14 +3,12 @@ import { useGameRoom } from '../hooks/useGameRoom';
 
 export const RoomManager = () => {
   const { createRoom, joinRoom, room, role } = useGameRoom();
-  const [roomInfo, setRoomInfo] = useState<{ roomId: string; playerId: string } | null>(null);
   const [joinRoomId, setJoinRoomId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleCreateRoom = async () => {
     try {
-      const info = await createRoom();
-      setRoomInfo(info);
+      await createRoom();
       setError(null);
     } catch (err) {
       setError('ルームの作成に失敗しました');
@@ -24,8 +22,7 @@ export const RoomManager = () => {
     }
 
     try {
-      const info = await joinRoom(joinRoomId.trim());
-      setRoomInfo(info);
+      await joinRoom(joinRoomId.trim());
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ルームへの参加に失敗しました');
