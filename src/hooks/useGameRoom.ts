@@ -40,11 +40,17 @@ export const useGameRoom = () => {
     }
 
     const playerId = Math.random().toString(36).substring(2, 9);
-    await update(roomRef, {
+    
+    const updatedRoom = {
+      ...roomData,
       guestId: playerId,
-      'gameState.status': 'playing'
-    });
+      gameState: {
+        ...roomData.gameState,
+        status: 'playing'
+      }
+    };
 
+    await set(roomRef, updatedRoom);
     setRoomId(roomIdToJoin);
     return { roomId: roomIdToJoin, playerId };
   };
