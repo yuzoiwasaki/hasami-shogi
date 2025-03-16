@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ref, set, onValue } from 'firebase/database';
+import { ref, set, onValue, update, get } from 'firebase/database';
 import { db } from '../firebase/config';
 import { GameRoom } from '../types';
 
@@ -26,6 +26,29 @@ export const useGameRoom = () => {
     return { roomId: newRoomId, playerId };
   };
 
+  const joinRoom = async (roomIdToJoin: string) => {
+    const roomRef = ref(db, `rooms/${roomIdToJoin}`);
+    const snapshot = await get(roomRef);
+    const roomData = snapshot.val() as GameRoom | null;
+
+    if (!roomData) {
+      throw new Error('ルームが見つかりません');
+    }
+
+    if (roomData.guestId) {
+      throw new Error('ルームが満員です');
+    }
+
+    const playerId = Math.random().toString(36).substring(2, 9);
+    await update(roomRef, {
+      guestId: playerId,
+      'gameState.status': 'playing'
+    });
+
+    setRoomId(roomIdToJoin);
+    return { roomId: roomIdToJoin, playerId };
+  };
+
   useEffect(() => {
     if (!roomId) return;
 
@@ -43,6 +66,7 @@ export const useGameRoom = () => {
   return {
     room,
     createRoom,
+    joinRoom,
     setRoomId
   };
 }; 

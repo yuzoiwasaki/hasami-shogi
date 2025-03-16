@@ -1,5 +1,6 @@
 import { Cell } from './components/Cell';
 import { useHasamiShogi } from './hooks/useHasamiShogi';
+import { RoomManager } from './components/RoomManager';
 
 function App() {
   const {
@@ -19,6 +20,8 @@ function App() {
         <h1 className="text-3xl sm:text-4xl font-bold text-center mb-4 sm:mb-8 text-gray-800 font-japanese">
           はさみ将棋
         </h1>
+        
+        <RoomManager />
         
         <div className="text-center mb-4 sm:mb-8 p-3 sm:p-4 bg-white rounded-lg shadow-md">
           {winner ? (
