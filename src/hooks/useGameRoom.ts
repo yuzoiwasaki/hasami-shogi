@@ -82,10 +82,8 @@ export const useGameRoom = () => {
 
   return {
     room,
-    playerId,
     role,
     createRoom,
     joinRoom,
-    setRoomId
   };
 }; 
