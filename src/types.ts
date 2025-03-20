@@ -30,7 +30,7 @@ export type GameRoom = {
   hostId: string;
   guestId?: string;
   gameState: {
-    board: (string | null)[][];
+    board: Board;
     currentTurn: Player;
     status: 'waiting' | 'playing' | 'finished';
   };
