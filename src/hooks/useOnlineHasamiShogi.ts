@@ -38,7 +38,6 @@ export const useOnlineHasamiShogi = () => {
     handleCellClick,
     resetGame,
     getPlayerName,
-    isMyTurn,
     room,
   };
 }; 
