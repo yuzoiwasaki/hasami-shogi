@@ -13,8 +13,6 @@ function GameContent() {
     handleCellClick,
     resetGame,
     getPlayerName,
-    isMyTurn,
-    room,
   } = useOnlineHasamiShogi();
 
   return (
