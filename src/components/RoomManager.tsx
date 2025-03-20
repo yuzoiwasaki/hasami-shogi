@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useGameRoom } from '../hooks/useGameRoom';
+import { useGameRoomContext } from '../contexts/GameRoomContext';
 
 export const RoomManager = () => {
-  const { createRoom, joinRoom, room, role } = useGameRoom();
+  const { createRoom, joinRoom, room, role } = useGameRoomContext();
   const [joinRoomId, setJoinRoomId] = useState('');
   const [error, setError] = useState<string | null>(null);
 

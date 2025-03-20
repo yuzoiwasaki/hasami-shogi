@@ -13,21 +13,27 @@ export const useGameRoom = () => {
     const newRoomId = Math.random().toString(36).substring(2, 9);
     const newPlayerId = Math.random().toString(36).substring(2, 9);
     
+    const initialBoard = Array(9).fill(null).map((_, row) => {
+      if (row === 0) return Array(9).fill('と');
+      if (row === 8) return Array(9).fill('歩');
+      return Array(9).fill(null);
+    });
+
     const newRoom: GameRoom = {
       id: newRoomId,
       hostId: newPlayerId,
       gameState: {
-        board: Array(9).fill(null).map(() => Array(9).fill(0)),
-        currentTurn: 'host',
+        board: initialBoard,
+        currentTurn: '歩',
         status: 'waiting'
       }
     };
 
     await set(ref(db, `rooms/${newRoomId}`), newRoom);
-    setRoomId(newRoomId);
     setPlayerId(newPlayerId);
+    setRoomId(newRoomId);
     setRole('host');
-    return { roomId: newRoomId, playerId: newPlayerId };
+    setRoom(newRoom);
   };
 
   const joinRoom = async (roomIdToJoin: string) => {

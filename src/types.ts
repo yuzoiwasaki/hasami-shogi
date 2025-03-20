@@ -30,8 +30,8 @@ export type GameRoom = {
   hostId: string;
   guestId?: string;
   gameState: {
-    board: number[][];
-    currentTurn: 'host' | 'guest';
+    board: (string | null)[][];
+    currentTurn: Player;
     status: 'waiting' | 'playing' | 'finished';
   };
 }; 
