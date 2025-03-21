@@ -19,6 +19,12 @@ export const useGameRoom = () => {
       return Array(9).fill(null);
     });
 
+    console.log('Creating room with board:', {
+      initialBoard,
+      isArray: Array.isArray(initialBoard),
+      isNestedArray: initialBoard.every(row => Array.isArray(row)),
+    });
+
     const newRoom: GameRoom = {
       id: newRoomId,
       hostId: newPlayerId,
@@ -67,6 +73,21 @@ export const useGameRoom = () => {
     return { roomId: roomIdToJoin, playerId: newPlayerId };
   };
 
+  const updateGameState = async (board: Board, currentTurn: Player) => {
+    if (!room || !roomId) return;
+
+    const updatedRoom: GameRoom = {
+      ...room,
+      gameState: {
+        ...room.gameState,
+        board,
+        currentTurn,
+      }
+    };
+
+    await set(ref(db, `rooms/${roomId}`), updatedRoom);
+  };
+
   useEffect(() => {
     if (!roomId || !playerId) return;
 
@@ -91,5 +112,6 @@ export const useGameRoom = () => {
     role,
     createRoom,
     joinRoom,
+    updateGameState,
   };
 }; 
