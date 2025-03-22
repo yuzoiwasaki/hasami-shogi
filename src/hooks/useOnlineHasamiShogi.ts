@@ -195,8 +195,10 @@ export const useOnlineHasamiShogi = () => {
     board,
     selectedCell,
     currentPlayer,
+    winner: null,
     error,
     handleCellClick,
+    resetGame: () => {},
     getPlayerName,
     room,
   };
