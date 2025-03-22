@@ -19,7 +19,7 @@ function GameContent() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-4 sm:mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 font-japanese">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 font-japanese flex-grow text-center">
           はさみ将棋
         </h1>
         {room && (
