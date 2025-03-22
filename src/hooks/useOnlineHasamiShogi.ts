@@ -15,7 +15,7 @@ export const useOnlineHasamiShogi = () => {
   };
 
   // 盤面データを配列に変換する関数
-  const convertToBoard = (data: any): Board => {
+  const convertToBoard = (data: Board | null | undefined): Board => {
     if (!data) return createInitialBoard();
 
     // 空の9x9盤面を作成
@@ -46,8 +46,8 @@ export const useOnlineHasamiShogi = () => {
           });
         }
       }
-
     } catch (error) {
+      console.error('Error converting board:', error);
       return createInitialBoard();
     }
 
@@ -166,9 +166,9 @@ export const useOnlineHasamiShogi = () => {
             const normalizedBoard = normalizeBoard(newBoard);
             const boardObj = boardToObject(normalizedBoard);
             
-            // Firebaseに送信
+            // Firebaseに送信（objectToBoardを使用して配列形式に変換）
             await updateGameState(objectToBoard(boardObj), nextTurn);
-            
+
             // ローカルの状態を更新
             setBoard(normalizedBoard);
             setCurrentPlayer(nextTurn);
@@ -195,10 +195,8 @@ export const useOnlineHasamiShogi = () => {
     board,
     selectedCell,
     currentPlayer,
-    winner: null,
     error,
     handleCellClick,
-    resetGame: () => {},
     getPlayerName,
     room,
   };
