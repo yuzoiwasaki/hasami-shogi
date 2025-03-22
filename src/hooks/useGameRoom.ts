@@ -4,33 +4,45 @@ import { db } from '../firebase/config';
 import type { GameRoom, Board, Player } from '../types';
 import { createInitialBoard } from '../utils/hasamiShogiLogic';
 
+type Role = 'host' | 'guest' | null;
+
+const ROOM_ERRORS = {
+  NOT_FOUND: 'ルームが見つかりません',
+  ROOM_FULL: 'ルームが満員です',
+  INVALID_STATE: 'ゲームの状態が不正です',
+} as const;
+
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
 export const useGameRoom = () => {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [room, setRoom] = useState<GameRoom | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
-  const [role, setRole] = useState<'host' | 'guest' | null>(null);
+  const [role, setRole] = useState<Role>(null);
+
+  const updateRoomState = (newRoom: GameRoom, newPlayerId: string) => {
+    setRoom(newRoom);
+    setPlayerId(newPlayerId);
+    setRoomId(newRoom.id);
+    setRole(newRoom.hostId === newPlayerId ? 'host' : 'guest');
+  };
 
   const createRoom = async () => {
-    const newRoomId = Math.random().toString(36).substring(2, 9);
-    const newPlayerId = Math.random().toString(36).substring(2, 9);
+    const newRoomId = generateId();
+    const newPlayerId = generateId();
     
-    const initialBoard = createInitialBoard();
-
     const newRoom: GameRoom = {
       id: newRoomId,
       hostId: newPlayerId,
       gameState: {
-        board: initialBoard,
+        board: createInitialBoard(),
         currentTurn: '歩',
         status: 'waiting'
       }
     };
 
     await set(ref(db, `rooms/${newRoomId}`), newRoom);
-    setPlayerId(newPlayerId);
-    setRoomId(newRoomId);
-    setRole('host');
-    setRoom(newRoom);
+    updateRoomState(newRoom, newPlayerId);
   };
 
   const joinRoom = async (roomIdToJoin: string) => {
@@ -39,16 +51,16 @@ export const useGameRoom = () => {
     const roomData = snapshot.val() as GameRoom | null;
 
     if (!roomData) {
-      throw new Error('ルームが見つかりません');
+      throw new Error(ROOM_ERRORS.NOT_FOUND);
     }
 
     if (roomData.guestId) {
-      throw new Error('ルームが満員です');
+      throw new Error(ROOM_ERRORS.ROOM_FULL);
     }
 
-    const newPlayerId = Math.random().toString(36).substring(2, 9);
+    const newPlayerId = generateId();
     
-    const updatedRoom = {
+    const updatedRoom: GameRoom = {
       ...roomData,
       guestId: newPlayerId,
       gameState: {
@@ -58,14 +70,14 @@ export const useGameRoom = () => {
     };
 
     await set(roomRef, updatedRoom);
-    setRoomId(roomIdToJoin);
-    setPlayerId(newPlayerId);
-    setRole('guest');
+    updateRoomState(updatedRoom, newPlayerId);
     return { roomId: roomIdToJoin, playerId: newPlayerId };
   };
 
   const updateGameState = async (board: Board, currentTurn: Player) => {
-    if (!room || !roomId) return;
+    if (!room?.id || !roomId) {
+      throw new Error(ROOM_ERRORS.INVALID_STATE);
+    }
 
     const updatedRoom: GameRoom = {
       ...room,
@@ -87,11 +99,7 @@ export const useGameRoom = () => {
       const data = snapshot.val() as GameRoom | null;
       if (data) {
         setRoom(data);
-        if (data.hostId === playerId) {
-          setRole('host');
-        } else if (data.guestId === playerId) {
-          setRole('guest');
-        }
+        setRole(data.hostId === playerId ? 'host' : 'guest');
       }
     });
 
