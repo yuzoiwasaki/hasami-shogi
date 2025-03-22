@@ -41,24 +41,13 @@ function GameContent() {
             <div className="text-xl sm:text-2xl font-bold text-gray-800">
               {getPlayerName(winner)}（{winner}）の勝利！
             </div>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={resetGame}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
-                  transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
-              >
-                もう一度プレイ
-              </button>
-              {room && (
-                <button
-                  onClick={() => window.location.reload()}
-                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
-                    transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
-                >
-                  ホームに戻る
-                </button>
-              )}
-            </div>
+            <button
+              onClick={resetGame}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
+                transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
+            >
+              もう一度プレイ
+            </button>
           </div>
         ) : (
           <div className="text-lg sm:text-xl text-gray-700">
