@@ -1,18 +1,16 @@
 import { useGameRoomContext } from '../contexts/GameRoomContext';
 import { useEffect, useState } from 'react';
-import { Board, Player, Position } from '../types';
+import { Board, Player, Position, GameErrorCode } from '../types';
+import {
+  createInitialBoard,
+  checkCaptures,
+  isValidMove,
+  checkWinner,
+  createGameError,
+} from '../utils/hasamiShogiLogic';
 
 export const useOnlineHasamiShogi = () => {
   const { room, role, updateGameState } = useGameRoomContext();
-
-  // 初期盤面を作成する関数
-  const createInitialBoard = (): Board => {
-    return Array(9).fill(null).map((_, row) => {
-      if (row === 0) return Array(9).fill('と');
-      if (row === 8) return Array(9).fill('歩');
-      return Array(9).fill(null);
-    });
-  };
 
   // 盤面データを配列に変換する関数
   const convertToBoard = (data: Board | null | undefined): Board => {
@@ -100,11 +98,11 @@ export const useOnlineHasamiShogi = () => {
     return board;
   };
 
-  // 状態を直接管理
   const [board, setBoard] = useState<Board>(createInitialBoard);
   const [selectedCell, setSelectedCell] = useState<Position | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [error, setError] = useState<{ message: string } | null>(null);
+  const [winner, setWinner] = useState<Player | null>(null);
 
   // roomの状態が変更されたら同期
   useEffect(() => {
@@ -124,6 +122,12 @@ export const useOnlineHasamiShogi = () => {
     }
   }, [role]);
 
+  // 勝利判定
+  useEffect(() => {
+    const currentWinner = checkWinner(board, currentPlayer);
+    if (currentWinner) setWinner(currentWinner);
+  }, [board, currentPlayer]);
+
   // 自分の手番かどうかをチェック
   const isMyTurn = role !== null && (
     (role === 'host' && currentPlayer === '歩') || 
@@ -134,7 +138,7 @@ export const useOnlineHasamiShogi = () => {
     try {
       // オンライン対戦時の手番チェック
       if (room && !isMyTurn) {
-        setError({ message: '自分の手番ではありません' });
+        setError(createGameError(GameErrorCode.INVALID_TURN));
         return;
       }
 
@@ -151,12 +155,18 @@ export const useOnlineHasamiShogi = () => {
         if (selectedRow === row && selectedCol === col) {
           // 選択解除
           setSelectedCell(null);
-        } else {
+        } else if (isValidMove(board, selectedRow, selectedCol, row, col)) {
           // 駒の移動を試みる
           const newBoard = board.map(row => [...row]);
           const movingPiece = board[selectedRow][selectedCol];
           newBoard[row][col] = movingPiece;
           newBoard[selectedRow][selectedCol] = null;
+
+          // 挟んだ駒を取る
+          const capturedPositions = checkCaptures(newBoard, row, col, currentPlayer);
+          capturedPositions.forEach(([r, c]) => {
+            newBoard[r][c] = null;
+          });
 
           // 次の手番を計算
           const nextTurn: Player = currentPlayer === '歩' ? 'と' : '歩';
@@ -166,7 +176,7 @@ export const useOnlineHasamiShogi = () => {
             const normalizedBoard = normalizeBoard(newBoard);
             const boardObj = boardToObject(normalizedBoard);
             
-            // Firebaseに送信（objectToBoardを使用して配列形式に変換）
+            // Firebaseに送信
             await updateGameState(objectToBoard(boardObj), nextTurn);
 
             // ローカルの状態を更新
@@ -195,10 +205,10 @@ export const useOnlineHasamiShogi = () => {
     board,
     selectedCell,
     currentPlayer,
-    winner: null,
+    winner,
     error,
     handleCellClick,
-    resetGame: () => {},
+    resetGame: () => setBoard(createInitialBoard()),
     getPlayerName,
     room,
   };
