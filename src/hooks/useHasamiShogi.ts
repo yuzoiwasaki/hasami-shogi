@@ -6,9 +6,6 @@ import {
   isValidMove,
   checkWinner,
   createGameError,
-  hasObstacleInPath,
-  countPieces,
-  hasValidMove,
 } from '../utils/hasamiShogiLogic';
 
 export const useHasamiShogi = () => {
