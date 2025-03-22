@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, set, onValue, get } from 'firebase/database';
 import { db } from '../firebase/config';
 import type { GameRoom, Board, Player } from '../types';
+import { createInitialBoard } from '../utils/hasamiShogiLogic';
 
 export const useGameRoom = () => {
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -13,17 +14,7 @@ export const useGameRoom = () => {
     const newRoomId = Math.random().toString(36).substring(2, 9);
     const newPlayerId = Math.random().toString(36).substring(2, 9);
     
-    const initialBoard = Array(9).fill(null).map((_, row) => {
-      if (row === 0) return Array(9).fill('と');
-      if (row === 8) return Array(9).fill('歩');
-      return Array(9).fill(null);
-    });
-
-    console.log('Creating room with board:', {
-      initialBoard,
-      isArray: Array.isArray(initialBoard),
-      isNestedArray: initialBoard.every(row => Array.isArray(row)),
-    });
+    const initialBoard = createInitialBoard();
 
     const newRoom: GameRoom = {
       id: newRoomId,
