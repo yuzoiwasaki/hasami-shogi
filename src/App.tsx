@@ -13,13 +13,25 @@ function GameContent() {
     handleCellClick,
     resetGame,
     getPlayerName,
+    room,
   } = useOnlineHasamiShogi();
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-4 sm:mb-8 text-gray-800 font-japanese">
-        はさみ将棋
-      </h1>
+      <div className="flex justify-between items-center mb-4 sm:mb-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 font-japanese">
+          はさみ将棋
+        </h1>
+        {room && (
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg
+              transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm"
+          >
+            ホームに戻る
+          </button>
+        )}
+      </div>
       
       <RoomManager />
       
@@ -29,13 +41,24 @@ function GameContent() {
             <div className="text-xl sm:text-2xl font-bold text-gray-800">
               {getPlayerName(winner)}（{winner}）の勝利！
             </div>
-            <button
-              onClick={resetGame}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
-                transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
-            >
-              もう一度プレイ
-            </button>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={resetGame}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
+                  transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
+              >
+                もう一度プレイ
+              </button>
+              {room && (
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg
+                    transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm sm:text-base"
+                >
+                  ホームに戻る
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="text-lg sm:text-xl text-gray-700">
