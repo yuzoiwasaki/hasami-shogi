@@ -90,6 +90,16 @@ export const useOnlineHasamiShogi = () => {
     }
   };
 
+  const objectToBoard = (obj: { [key: number]: { [key: number]: string | null } }): Board => {
+    const board: Board = Array(9).fill(null).map(() => Array(9).fill(null));
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        board[i][j] = obj[i]?.[j] ?? null;
+      }
+    }
+    return board;
+  };
+
   // 状態を直接管理
   const [board, setBoard] = useState<Board>(createInitialBoard);
   const [selectedCell, setSelectedCell] = useState<Position | null>(null);
@@ -157,7 +167,7 @@ export const useOnlineHasamiShogi = () => {
             const boardObj = boardToObject(normalizedBoard);
             
             // Firebaseに送信
-            await updateGameState(boardObj, nextTurn);
+            await updateGameState(objectToBoard(boardObj), nextTurn);
             
             // ローカルの状態を更新
             setBoard(normalizedBoard);
