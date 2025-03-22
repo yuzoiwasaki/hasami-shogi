@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ref, set, onValue, get } from 'firebase/database';
 import { db } from '../firebase/config';
-import { GameRoom } from '../types';
+import type { GameRoom, Board, Player } from '../types';
 
 export const useGameRoom = () => {
   const [roomId, setRoomId] = useState<string | null>(null);
