@@ -1,7 +1,7 @@
 {
   "name": "hasami-shogi",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "firebase": "^11.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

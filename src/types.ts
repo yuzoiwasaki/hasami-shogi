@@ -23,4 +23,15 @@ export type CellProps = {
   piece: string | null;
   onClick: () => void;
   isSelected: boolean;
+};
+
+export type GameRoom = {
+  id: string;
+  hostId: string;
+  guestId?: string;
+  gameState: {
+    board: Board;
+    currentTurn: Player;
+    status: 'waiting' | 'playing' | 'finished';
+  };
 }; 
