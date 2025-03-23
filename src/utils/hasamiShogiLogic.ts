@@ -1,4 +1,4 @@
-import { Board, Player, GameError, GameErrorCode } from '../types';
+import { Board, Player, GameError, GameErrorCodeType, GameErrorMessages } from '../types';
 
 export const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
@@ -46,29 +46,38 @@ export const hasObstacleInPath = (
   return false;
 };
 
+export const canMove = (
+  board: Board,
+  row: number,
+  col: number
+): boolean => {
+  const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+  for (const [dx, dy] of directions) {
+    for (let distance = 1; distance < 9; distance++) {
+      const newRow = row + dx * distance;
+      const newCol = col + dy * distance;
+
+      if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) break;
+      if (board[newRow][newCol] !== null) break;
+      if (!hasObstacleInPath(board, row, col, newRow, newCol)) {
+        return true;
+      } else {
+        break;
+      }
+    }
+  }
+  return false;
+};
+
 export const hasValidMove = (
   board: Board,
   currentPlayer: Player,
 ): boolean => {
   for (let i = 0; i < 9; i++) {
     for (let j = 0; j < 9; j++) {
-      if (board[i][j] === currentPlayer) {
-        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-        for (const [dx, dy] of directions) {
-          for (let distance = 1; distance < 9; distance++) {
-            const newRow = i + dx * distance;
-            const newCol = j + dy * distance;
-
-            if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) break;
-            if (board[newRow][newCol] !== null) break;
-            if (!hasObstacleInPath(board, i, j, newRow, newCol)) {
-              return true;
-            } else {
-              break;
-            }
-          }
-        }
+      if (board[i][j] === currentPlayer && canMove(board, i, j)) {
+        return true;
       }
     }
   }
@@ -91,7 +100,53 @@ export const checkWinner = (
   return null;
 };
 
-// はさみ判定に関連する関数群
+// はさみ判定の共通処理
+const checkCapturesInDirection = (
+  board: Board,
+  row: number,
+  col: number,
+  piece: string,
+  opponent: string,
+  isHorizontal: boolean
+): [number, number][] => {
+  const capturedPositions: [number, number][] = [];
+  const isPositive = isHorizontal ? col <= 6 : row <= 6;
+  const isNegative = isHorizontal ? col >= 2 : row >= 2;
+  const maxIndex = isHorizontal ? 9 : 9;
+
+  // 正方向のチェック
+  if (isPositive) {
+    let captureCount = 0;
+    let currentIndex = isHorizontal ? col + 1 : row + 1;
+    while (currentIndex < maxIndex && (isHorizontal ? board[row][currentIndex] : board[currentIndex][col]) === opponent) {
+      captureCount++;
+      currentIndex++;
+    }
+    if (captureCount > 0 && currentIndex < maxIndex && (isHorizontal ? board[row][currentIndex] : board[currentIndex][col]) === piece) {
+      for (let i = 1; i <= captureCount; i++) {
+        capturedPositions.push(isHorizontal ? [row, col + i] : [row + i, col]);
+      }
+    }
+  }
+
+  // 負方向のチェック
+  if (isNegative) {
+    let captureCount = 0;
+    let currentIndex = isHorizontal ? col - 1 : row - 1;
+    while (currentIndex >= 0 && (isHorizontal ? board[row][currentIndex] : board[currentIndex][col]) === opponent) {
+      captureCount++;
+      currentIndex--;
+    }
+    if (captureCount > 0 && currentIndex >= 0 && (isHorizontal ? board[row][currentIndex] : board[currentIndex][col]) === piece) {
+      for (let i = 1; i <= captureCount; i++) {
+        capturedPositions.push(isHorizontal ? [row, col - i] : [row - i, col]);
+      }
+    }
+  }
+
+  return capturedPositions;
+};
+
 export const checkHorizontalCaptures = (
   board: Board,
   row: number,
@@ -99,39 +154,7 @@ export const checkHorizontalCaptures = (
   piece: string,
   opponent: string
 ): [number, number][] => {
-  const capturedPositions: [number, number][] = [];
-
-  // 左方向
-  if (col >= 2) {
-    let captureCount = 0;
-    let currentCol = col - 1;
-    while (currentCol >= 0 && board[row][currentCol] === opponent) {
-      captureCount++;
-      currentCol--;
-    }
-    if (captureCount > 0 && currentCol >= 0 && board[row][currentCol] === piece) {
-      for (let i = 1; i <= captureCount; i++) {
-        capturedPositions.push([row, col - i]);
-      }
-    }
-  }
-
-  // 右方向
-  if (col <= 6) {
-    let captureCount = 0;
-    let currentCol = col + 1;
-    while (currentCol < 9 && board[row][currentCol] === opponent) {
-      captureCount++;
-      currentCol++;
-    }
-    if (captureCount > 0 && currentCol < 9 && board[row][currentCol] === piece) {
-      for (let i = 1; i <= captureCount; i++) {
-        capturedPositions.push([row, col + i]);
-      }
-    }
-  }
-
-  return capturedPositions;
+  return checkCapturesInDirection(board, row, col, piece, opponent, true);
 };
 
 export const checkVerticalCaptures = (
@@ -141,39 +164,54 @@ export const checkVerticalCaptures = (
   piece: string,
   opponent: string
 ): [number, number][] => {
-  const capturedPositions: [number, number][] = [];
+  return checkCapturesInDirection(board, row, col, piece, opponent, false);
+};
 
-  // 上方向
-  if (row >= 2) {
-    let captureCount = 0;
-    let currentRow = row - 1;
-    while (currentRow >= 0 && board[currentRow][col] === opponent) {
-      captureCount++;
-      currentRow--;
-    }
-    if (captureCount > 0 && currentRow >= 0 && board[currentRow][col] === piece) {
-      for (let i = 1; i <= captureCount; i++) {
-        capturedPositions.push([row - i, col]);
+// 駒が囲まれているかどうかを判定する関数
+export const isPieceSurrounded = (
+  board: Board,
+  row: number,
+  col: number
+): boolean => {
+  const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const piece = board[row][col];
+  if (!piece) return false;
+  const opponent = piece === '歩' ? 'と' : '歩';
+
+  // 端の駒の場合
+  if (row === 0 || row === 8 || col === 0 || col === 8) {
+    let surroundedCount = 0;
+    let totalAdjacent = 0;
+
+    for (const [dx, dy] of directions) {
+      const newRow = row + dx;
+      const newCol = col + dy;
+
+      if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) continue;
+      
+      totalAdjacent++;
+      if (board[newRow][newCol] === opponent) {
+        surroundedCount++;
       }
+    }
+
+    // 端の駒の場合、隣接するマスのうち、相手の駒に囲まれているマスの数が
+    // 隣接するマスの総数と等しい場合、囲まれていると判定
+    return surroundedCount === totalAdjacent;
+  }
+
+  // 中央の駒の場合
+  for (const [dx, dy] of directions) {
+    const newRow = row + dx;
+    const newCol = col + dy;
+
+    if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) continue;
+    if (board[newRow][newCol] !== opponent) {
+      return false;
     }
   }
 
-  // 下方向
-  if (row <= 6) {
-    let captureCount = 0;
-    let currentRow = row + 1;
-    while (currentRow < 9 && board[currentRow][col] === opponent) {
-      captureCount++;
-      currentRow++;
-    }
-    if (captureCount > 0 && currentRow < 9 && board[currentRow][col] === piece) {
-      for (let i = 1; i <= captureCount; i++) {
-        capturedPositions.push([row + i, col]);
-      }
-    }
-  }
-
-  return capturedPositions;
+  return true;
 };
 
 export const checkCaptures = (
@@ -186,7 +224,19 @@ export const checkCaptures = (
   const horizontalCaptures = checkHorizontalCaptures(board, row, col, piece, opponent);
   const verticalCaptures = checkVerticalCaptures(board, row, col, piece, opponent);
   
-  return [...horizontalCaptures, ...verticalCaptures];
+  // はさみによる駒の取得
+  const captures = [...horizontalCaptures, ...verticalCaptures];
+  
+  // 相手の駒が囲まれている場合の駒の取得
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      if (board[i][j] === opponent && isPieceSurrounded(board, i, j)) {
+        captures.push([i, j]);
+      }
+    }
+  }
+  
+  return captures;
 };
 
 export const isValidMove = (
@@ -203,13 +253,9 @@ export const isValidMove = (
   );
 };
 
-export const createGameError = (code: GameErrorCode): GameError => {
-  const messages: Record<GameErrorCode, string> = {
-    [GameErrorCode.INVALID_TURN]: '自分の手番ではありません',
-  };
-
+export const createGameError = (code: GameErrorCodeType): GameError => {
   return {
     code,
-    message: messages[code],
+    message: GameErrorMessages[code],
   };
 }; 

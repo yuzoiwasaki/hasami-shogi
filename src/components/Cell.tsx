@@ -17,7 +17,9 @@ export const Cell: FC<CellProps> = ({ piece, onClick, isSelected }) => {
         border border-gray-300
       `}
     >
-      {piece}
+      <span className={piece === 'と' ? 'transform rotate-180' : ''}>
+        {piece}
+      </span>
     </div>
   );
 }; 

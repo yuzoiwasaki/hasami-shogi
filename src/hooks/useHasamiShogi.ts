@@ -32,7 +32,7 @@ export const useHasamiShogi = () => {
       if (board[row][col] === currentPlayer) {
         setSelectedCell([row, col]);
       } else if (board[row][col] !== null) {
-        setError(createGameError(GameErrorCode.INVALID_TURN));
+        setError(createGameError(GameErrorCode.WRONG_PIECE));
       }
       return;
     }
