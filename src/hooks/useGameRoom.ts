@@ -5,9 +5,9 @@ import type { GameRoom, Board, Player } from '../types';
 import { createInitialBoard } from '../utils/hasamiShogiLogic';
 
 const ROOM_ERRORS = {
-  NOT_FOUND: 'ルームが見つかりません',
+  NOT_FOUND: '対局室が見つかりません',
   ROOM_FULL: '対局室が満員です',
-  INVALID_STATE: 'ゲームの状態が不正です',
+  INVALID_STATE: '対局の状態が不正です',
   NOT_YOUR_TURN: 'あなたの手番ではありません',
 } as const;
 
@@ -31,7 +31,7 @@ export const useGameRoom = () => {
 
       if (!currentRoom) return;
 
-      // 待機中の場合は必ず部屋を削除
+      // 対局開始前の場合は必ず対局室を削除
       if (currentRoom.gameState.status === 'waiting') {
         await set(roomRef, null);
         setRoom(null);
@@ -41,7 +41,7 @@ export const useGameRoom = () => {
         return;
       }
 
-      // ゲーム終了時も部屋を削除
+      // 対局終了時も対局室を削除
       if (currentRoom.gameState.status === 'finished') {
         await set(roomRef, null);
         setRoom(null);
@@ -100,14 +100,14 @@ export const useGameRoom = () => {
     const newPlayerId = generateId();
 
     if (!roomData) {
-      // 部屋が存在しない場合は新規作成（先手として入室）
+      // 対局室が存在しない場合は新規作成（先手として入室）
       const newRoom: GameRoom = {
         id: roomIdToEnter,
         firstPlayerId: newPlayerId,
         gameState: {
           board: createInitialBoard(),
           currentTurn: '歩',
-          status: 'waiting',
+          status: 'waiting',  // 対局開始前
           isFirstPlayerTurn: true,
           firstPlayerTime: INITIAL_TIME,
           secondPlayerTime: INITIAL_TIME,
@@ -123,13 +123,16 @@ export const useGameRoom = () => {
       throw new Error(ROOM_ERRORS.ROOM_FULL);
     }
 
-    // 部屋が存在し、後手プレイヤーとして参加
+    // 対局室が存在し、後手プレイヤーとして参加
     const updatedRoom: GameRoom = {
       ...roomData,
       secondPlayerId: newPlayerId,
       gameState: {
         ...roomData.gameState,
-        status: 'playing'
+        status: 'playing',
+        lastMoveTime: Date.now(),
+        firstPlayerTime: INITIAL_TIME,
+        secondPlayerTime: INITIAL_TIME
       }
     };
 
@@ -154,7 +157,7 @@ export const useGameRoom = () => {
           status: 'finished',
           winner
         });
-        // 10秒後に部屋を削除
+        // 10秒後に対局室を削除
         setTimeout(async () => {
           const roomRef = ref(db, `rooms/${room.id}`);
           await set(roomRef, null);
@@ -192,7 +195,7 @@ export const useGameRoom = () => {
         setRoom(data);
         setIsFirstPlayer(playerId ? data.firstPlayerId === playerId : null);
       } else {
-        // 部屋が削除された場合
+        // 対局室が削除された場合
         setRoom(null);
         setPlayerId(null);
         setRoomId(null);

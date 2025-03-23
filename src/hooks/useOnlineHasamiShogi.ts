@@ -75,7 +75,7 @@ export const useOnlineHasamiShogi = () => {
       // 入室直後の場合は盤面をリセット
       if (room.gameState.status === 'waiting') {
         const initialBoard = createInitialBoard();
-        updateGameState(initialBoard, '歩', true); // 先手の手番をtrueに設定
+        updateGameState(initialBoard, '歩', true);
         setBoard(initialBoard);
         setCurrentPlayer('歩');
         setSelectedCell(null);
@@ -84,11 +84,26 @@ export const useOnlineHasamiShogi = () => {
         return;
       }
 
+      // ゲームが実際に開始された時（二人目のプレイヤーが入室した時）
+      if (room.gameState.status === 'playing' && 
+          room.gameState.firstPlayerId && 
+          room.gameState.secondPlayerId && 
+          !room.gameState.lastMoveTime) {
+        // lastMoveTimeを設定してゲーム開始
+        update(ref(db, `rooms/${room.id}/gameState`), {
+          lastMoveTime: Date.now(),
+          firstPlayerTime: INITIAL_TIME,
+          secondPlayerTime: INITIAL_TIME,
+        });
+        return;
+      }
+
       const newBoard = convertToBoard(room.gameState.board);
       setBoard(newBoard);
       setCurrentPlayer(room.gameState.currentTurn);
     }
-  }, [room?.gameState.board, room?.gameState.currentTurn, room?.gameState.status]);
+  }, [room?.gameState.board, room?.gameState.currentTurn, room?.gameState.status, 
+      room?.gameState.firstPlayerId, room?.gameState.secondPlayerId, room?.gameState.lastMoveTime]);
 
   const isMyTurn = room ? (
     (isFirstPlayer && currentPlayer === '歩') || (!isFirstPlayer && currentPlayer === 'と')
@@ -191,20 +206,32 @@ export const useOnlineHasamiShogi = () => {
   // サーバーの時間を基にローカルの時間を更新
   useEffect(() => {
     if (!room) return;
-    const currentTime = Date.now();
-    const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
     
-    // 現在の手番のプレイヤーの時間のみ経過時間を引く
-    const firstPlayerTime = room.gameState.currentTurn === '歩'
-      ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
-      : room.gameState.firstPlayerTime;
-    const secondPlayerTime = room.gameState.currentTurn === 'と'
-      ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
-      : room.gameState.secondPlayerTime;
+    // 対局開始前の場合は初期時間をセット
+    if (room.gameState.status === 'waiting' || !room.gameState.lastMoveTime) {
+      setLocalFirstPlayerTime(INITIAL_TIME);
+      setLocalSecondPlayerTime(INITIAL_TIME);
+      return;
+    }
 
-    setLocalFirstPlayerTime(firstPlayerTime);
-    setLocalSecondPlayerTime(secondPlayerTime);
-  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, room?.gameState.lastMoveTime, room?.gameState.currentTurn]);
+    // プレイ中の場合のみ時間を更新
+    if (room.gameState.status === 'playing') {
+      const currentTime = Date.now();
+      const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
+      
+      // 現在の手番のプレイヤーの時間のみ経過時間を引く
+      const firstPlayerTime = room.gameState.currentTurn === '歩'
+        ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
+        : room.gameState.firstPlayerTime;
+      const secondPlayerTime = room.gameState.currentTurn === 'と'
+        ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
+        : room.gameState.secondPlayerTime;
+
+      setLocalFirstPlayerTime(firstPlayerTime);
+      setLocalSecondPlayerTime(secondPlayerTime);
+    }
+  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, room?.gameState.lastMoveTime, 
+      room?.gameState.currentTurn, room?.gameState.status]);
 
   // リアルタイムでの時間更新（より頻繁に更新）
   useEffect(() => {
