@@ -5,7 +5,7 @@ import { GameRoomProvider } from './contexts/GameRoomContext';
 import { useState, useEffect } from 'react';
 import { SHOGI_ROOMS, RoomId } from './constants/rooms';
 import { useGameRoomContext } from './contexts/GameRoomContext';
-import { ref, onValue, Unsubscribe } from 'firebase/database';
+import { ref, onValue } from 'firebase/database';
 import { db } from './firebase/config';
 
 type RoomStatus = {
