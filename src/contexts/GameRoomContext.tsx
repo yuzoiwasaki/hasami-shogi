@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode, useCallback } from 'react';
 import { useGameRoom } from '../hooks/useGameRoom';
-import type { GameRoom, Board, Player, GameState } from '../types';
+import type { GameRoom, Board, Player } from '../types';
 import { ref, get, update } from 'firebase/database';
 import { db } from '../firebase/config';
 
