@@ -180,8 +180,7 @@ export const checkVerticalCaptures = (
 export const canMove = (
   board: Board,
   row: number,
-  col: number,
-  piece: Player
+  col: number
 ): boolean => {
   const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
