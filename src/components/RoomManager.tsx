@@ -1,101 +1,89 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameRoomContext } from '../contexts/GameRoomContext';
+import { SHOGI_ROOMS } from '../constants/rooms';
+import type { GameRoom } from '../types';
+import { ref, get } from 'firebase/database';
+import { db } from '../firebase/config';
 
 export const RoomManager = () => {
-  const { createRoom, joinRoom, room, role } = useGameRoomContext();
-  const [joinRoomId, setJoinRoomId] = useState('');
+  const { room, isFirstPlayer, enterRoom } = useGameRoomContext();
+  const [selectedRoomId, setSelectedRoomId] = useState('');
+  const [occupiedRooms, setOccupiedRooms] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCreateRoom = async () => {
-    try {
-      await createRoom();
-      setError(null);
-    } catch (err) {
-      setError('ルームの作成に失敗しました');
-    }
-  };
+  useEffect(() => {
+    const checkOccupiedRooms = async () => {
+      try {
+        const occupiedRoomIds: string[] = [];
+        
+        for (const room of SHOGI_ROOMS) {
+          const roomRef = ref(db, `rooms/${room.id}`);
+          const snapshot = await get(roomRef);
+          const roomData = snapshot.val() as GameRoom | null;
+          
+          if (roomData?.gameState.status === 'playing') {
+            occupiedRoomIds.push(room.id);
+          }
+        }
+        
+        setOccupiedRooms(occupiedRoomIds);
+      } catch (err) {
+        console.error('部屋の状態チェックに失敗しました:', err);
+      }
+    };
 
-  const handleJoinRoom = async () => {
-    if (!joinRoomId.trim()) {
-      setError('ルームIDを入力してください');
+    const interval = setInterval(checkOccupiedRooms, 5000);
+    checkOccupiedRooms();
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleEnterRoom = async () => {
+    if (!selectedRoomId) {
+      setError('対局室を選択してください');
       return;
     }
 
     try {
-      await joinRoom(joinRoomId.trim());
       setError(null);
+      await enterRoom(selectedRoomId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'ルームへの参加に失敗しました');
+      setError(err instanceof Error ? err.message : '予期せぬエラーが発生しました');
     }
   };
 
-  const getStatusMessage = () => {
-    if (!room) return null;
-    
-    switch (room.gameState.status) {
-      case 'waiting':
-        return '対戦相手の参加を待っています...';
-      case 'playing':
-        return 'ゲーム中';
-      case 'finished':
-        return 'ゲーム終了';
-      default:
-        return null;
-    }
-  };
+  if (room && isFirstPlayer !== null) {
+    return null;
+  }
 
   return (
-    <div className="text-center mb-4 p-3 bg-white rounded-lg shadow-md">
-      <div className="space-y-4">
-        {!room && (
-          <>
-            <div>
-              <button
-                onClick={handleCreateRoom}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"
-              >
-                オンライン対戦を開始
-              </button>
-            </div>
-
-            <div className="flex items-center justify-center space-x-2">
-              <input
-                type="text"
-                value={joinRoomId}
-                onChange={(e) => setJoinRoomId(e.target.value)}
-                placeholder="ルームIDを入力"
-                className="border rounded px-3 py-2"
-              />
-              <button
-                onClick={handleJoinRoom}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
-              >
-                参加
-              </button>
-            </div>
-          </>
-        )}
-
-        {error && (
-          <div className="text-red-600 text-sm">
-            {error}
-          </div>
-        )}
-
-        {room && (
-          <div className="space-y-2">
-            <div className="font-bold text-lg">
-              {role === 'host' ? '先手（ホスト）' : '後手（ゲスト）'}
-            </div>
-            <div className="text-sm text-gray-600">
-              ルームID: {room.id}
-            </div>
-            <div className="text-sm text-gray-600">
-              {getStatusMessage()}
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col items-center gap-4 p-4">
+      <select
+        value={selectedRoomId}
+        onChange={(e) => setSelectedRoomId(e.target.value)}
+        className="p-2 border rounded"
+      >
+        <option value="">対局室を選択</option>
+        {SHOGI_ROOMS.map(({ id, name }) => (
+          <option
+            key={id}
+            value={id}
+            disabled={occupiedRooms.includes(id)}
+          >
+            {name} {occupiedRooms.includes(id) ? '(使用中)' : ''}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p className="text-red-500">{error}</p>
+      )}
+      <button
+        onClick={handleEnterRoom}
+        disabled={!selectedRoomId}
+        className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+      >
+        対局室に入る
+      </button>
     </div>
   );
 }; 

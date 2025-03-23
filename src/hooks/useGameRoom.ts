@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
-import { ref, set, onValue, get } from 'firebase/database';
+import { useState, useEffect, useCallback } from 'react';
+import { ref, set, onValue, get, update } from 'firebase/database';
 import { db } from '../firebase/config';
-import type { GameRoom, Board, Player } from '../types';
+import type { GameRoom, Board, Player, GameError } from '../types';
+import { GameErrorCode } from '../types';
 import { createInitialBoard } from '../utils/hasamiShogiLogic';
-
-type Role = 'host' | 'guest' | null;
 
 const ROOM_ERRORS = {
   NOT_FOUND: 'ルームが見つかりません',
-  ROOM_FULL: 'ルームが満員です',
+  ROOM_FULL: '対局室が満員です',
   INVALID_STATE: 'ゲームの状態が不正です',
+  NOT_YOUR_TURN: 'あなたの手番ではありません',
 } as const;
+
+export const INITIAL_TIME = 300; // 5分（秒）
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -18,51 +20,101 @@ export const useGameRoom = () => {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [room, setRoom] = useState<GameRoom | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
-  const [role, setRole] = useState<Role>(null);
+  const [isFirstPlayer, setIsFirstPlayer] = useState<boolean | null>(null);
 
-  const updateRoomState = (newRoom: GameRoom, newPlayerId: string) => {
-    setRoom(newRoom);
-    setPlayerId(newPlayerId);
-    setRoomId(newRoom.id);
-    setRole(newRoom.hostId === newPlayerId ? 'host' : 'guest');
-  };
+  const leaveRoom = useCallback(async () => {
+    if (!room?.id || !playerId) return;
 
-  const createRoom = async () => {
-    const newRoomId = generateId();
-    const newPlayerId = generateId();
-    
-    const newRoom: GameRoom = {
-      id: newRoomId,
-      hostId: newPlayerId,
-      gameState: {
-        board: createInitialBoard(),
-        currentTurn: '歩',
-        status: 'waiting'
+    const roomRef = ref(db, `rooms/${room.id}`);
+    const snapshot = await get(roomRef);
+    const currentRoom = snapshot.val() as GameRoom | null;
+
+    if (!currentRoom) return;
+
+    if (currentRoom.firstPlayerId === playerId) {
+      // 先手が退出した場合
+      if (!currentRoom.secondPlayerId) {
+        // 後手がいない場合は部屋を削除
+        await set(roomRef, null);
+      } else {
+        // 後手がいる場合は先手を削除
+        await set(roomRef, {
+          ...currentRoom,
+          firstPlayerId: currentRoom.secondPlayerId,
+          secondPlayerId: null,
+          gameState: {
+            ...currentRoom.gameState,
+            status: 'waiting',
+            isFirstPlayerTurn: true,
+            firstPlayerTime: INITIAL_TIME,
+            secondPlayerTime: INITIAL_TIME,
+            lastMoveTime: Date.now(),
+          }
+        });
       }
-    };
+    } else if (currentRoom.secondPlayerId === playerId) {
+      // 後手が退出した場合
+      if (!currentRoom.firstPlayerId) {
+        // 先手がいない場合は部屋を削除
+        await set(roomRef, null);
+      } else {
+        // 先手がいる場合は後手を削除
+        await set(roomRef, {
+          ...currentRoom,
+          secondPlayerId: null,
+          gameState: {
+            ...currentRoom.gameState,
+            status: 'waiting',
+            isFirstPlayerTurn: true,
+            firstPlayerTime: INITIAL_TIME,
+            secondPlayerTime: INITIAL_TIME,
+            lastMoveTime: Date.now(),
+          }
+        });
+      }
+    }
 
-    await set(ref(db, `rooms/${newRoomId}`), newRoom);
-    updateRoomState(newRoom, newPlayerId);
-  };
+    setRoom(null);
+    setPlayerId(null);
+    setRoomId(null);
+    setIsFirstPlayer(null);
+  }, [room?.id, playerId]);
 
-  const joinRoom = async (roomIdToJoin: string) => {
-    const roomRef = ref(db, `rooms/${roomIdToJoin}`);
+  const enterRoom = async (roomIdToEnter: string) => {
+    const roomRef = ref(db, `rooms/${roomIdToEnter}`);
     const snapshot = await get(roomRef);
     const roomData = snapshot.val() as GameRoom | null;
 
+    const newPlayerId = generateId();
+
     if (!roomData) {
-      throw new Error(ROOM_ERRORS.NOT_FOUND);
+      // 部屋が存在しない場合は新規作成（先手として入室）
+      const newRoom: GameRoom = {
+        id: roomIdToEnter,
+        firstPlayerId: newPlayerId,
+        gameState: {
+          board: createInitialBoard(),
+          currentTurn: '歩',
+          status: 'waiting',
+          isFirstPlayerTurn: true,
+          firstPlayerTime: INITIAL_TIME,
+          secondPlayerTime: INITIAL_TIME,
+          lastMoveTime: Date.now(),
+        }
+      };
+      await set(roomRef, newRoom);
+      updateRoomState(newRoom, newPlayerId);
+      return;
     }
 
-    if (roomData.guestId) {
+    if (roomData.secondPlayerId) {
       throw new Error(ROOM_ERRORS.ROOM_FULL);
     }
 
-    const newPlayerId = generateId();
-    
+    // 部屋が存在し、後手プレイヤーとして参加
     const updatedRoom: GameRoom = {
       ...roomData,
-      guestId: newPlayerId,
+      secondPlayerId: newPlayerId,
       gameState: {
         ...roomData.gameState,
         status: 'playing'
@@ -71,26 +123,66 @@ export const useGameRoom = () => {
 
     await set(roomRef, updatedRoom);
     updateRoomState(updatedRoom, newPlayerId);
-    return { roomId: roomIdToJoin, playerId: newPlayerId };
   };
 
-  const updateGameState = async (board: Board, currentTurn: Player) => {
-    if (!room?.id || !roomId) {
-      throw new Error(ROOM_ERRORS.INVALID_STATE);
-    }
+  const updateGameState = useCallback(async (board: Board, currentTurn: Player, isFirstPlayerTurn: boolean) => {
+    if (!room) return;
 
-    const updatedRoom: GameRoom = {
-      ...room,
-      gameState: {
-        ...room.gameState,
-        board,
-        currentTurn,
+    try {
+      // 勝者判定
+      const firstPlayerCount = board.flat().filter(cell => cell === '歩').length;
+      const secondPlayerCount = board.flat().filter(cell => cell === 'と').length;
+
+      if (firstPlayerCount === 0) {
+        // 後手の勝利
+        await update(ref(db, `rooms/${room.id}/gameState`), {
+          board,
+          currentTurn,
+          status: 'finished',
+          winner: 'と'
+        });
+        // 10秒後に部屋を削除
+        setTimeout(async () => {
+          const roomRef = ref(db, `rooms/${room.id}`);
+          await set(roomRef, null);
+          leaveRoom();
+        }, 10000);
+      } else if (secondPlayerCount === 0) {
+        // 先手の勝利
+        await update(ref(db, `rooms/${room.id}/gameState`), {
+          board,
+          currentTurn,
+          status: 'finished',
+          winner: '歩'
+        });
+        // 10秒後に部屋を削除
+        setTimeout(async () => {
+          const roomRef = ref(db, `rooms/${room.id}`);
+          await set(roomRef, null);
+          leaveRoom();
+        }, 10000);
+      } else {
+        // 通常の手
+        await update(ref(db, `rooms/${room.id}/gameState`), {
+          board,
+          currentTurn,
+          status: 'playing'
+        });
       }
-    };
+    } catch (error) {
+      console.error('Error updating game state:', error);
+      throw error;
+    }
+  }, [room, leaveRoom]);
 
-    await set(ref(db, `rooms/${roomId}`), updatedRoom);
+  const updateRoomState = (newRoom: GameRoom, newPlayerId: string) => {
+    setRoom(newRoom);
+    setPlayerId(newPlayerId);
+    setRoomId(newRoom.id);
+    setIsFirstPlayer(newRoom.firstPlayerId === newPlayerId);
   };
 
+  // 部屋の状態監視
   useEffect(() => {
     if (!roomId || !playerId) return;
 
@@ -99,7 +191,13 @@ export const useGameRoom = () => {
       const data = snapshot.val() as GameRoom | null;
       if (data) {
         setRoom(data);
-        setRole(data.hostId === playerId ? 'host' : 'guest');
+        setIsFirstPlayer(data.firstPlayerId === playerId);
+      } else {
+        // 部屋が削除された場合
+        setRoom(null);
+        setPlayerId(null);
+        setRoomId(null);
+        setIsFirstPlayer(null);
       }
     });
 
@@ -108,9 +206,9 @@ export const useGameRoom = () => {
 
   return {
     room,
-    role,
-    createRoom,
-    joinRoom,
+    isFirstPlayer,
+    enterRoom,
+    leaveRoom,
     updateGameState,
   };
 }; 

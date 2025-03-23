@@ -2,6 +2,7 @@ import { Cell } from './components/Cell';
 import { useOnlineHasamiShogi } from './hooks/useOnlineHasamiShogi';
 import { RoomManager } from './components/RoomManager';
 import { GameRoomProvider } from './contexts/GameRoomContext';
+import { INITIAL_TIME } from './hooks/useGameRoom';
 
 function GameContent() {
   const {
@@ -14,6 +15,13 @@ function GameContent() {
     resetGame,
     getPlayerName,
     room,
+    getPlayerRole,
+    getGameStatus,
+    getRoomName,
+    leaveRoom,
+    isMyTurn,
+    getTimeDisplay,
+    resign,
   } = useOnlineHasamiShogi();
 
   return (
@@ -22,73 +30,143 @@ function GameContent() {
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 font-japanese">
           はさみ将棋
         </h1>
-        {room && (
+        {room && room.gameState.status === 'waiting' && (
           <button
-            onClick={() => window.location.reload()}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg
-              transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-sm ml-4"
+            onClick={leaveRoom}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg
+              transition duration-200 ease-in-out transform hover:scale-105 shadow-sm text-sm flex items-center gap-1"
+            title="対局から退出します"
           >
-            ホームに戻る
+            退出
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        )}
+        {room && room.gameState.status === 'playing' && (
+          <button
+            onClick={() => {
+              if (window.confirm('投了しますか？')) {
+                resign();
+              }
+            }}
+            disabled={!isMyTurn}
+            className={`px-4 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 ${
+              isMyTurn
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+            title={isMyTurn ? '投了する' : '相手の手番です'}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+            投了
           </button>
         )}
       </div>
       
       <RoomManager />
       
-      <div className="text-center mb-6 sm:mb-10 p-4 sm:p-6 bg-white rounded-lg shadow-lg border border-gray-100">
-        {winner ? (
-          <div className="space-y-4 sm:space-y-6">
-            <div className="text-2xl sm:text-3xl font-bold text-gray-800 animate-fade-in">
-              {getPlayerName(winner)}
-              <span className="inline-block mx-2 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full">
-                {winner}
-              </span>
-              の勝利！
+      {room && (
+        <div className="mb-6 bg-white rounded-lg shadow-md p-4">
+          <div className="flex justify-between items-center border-b pb-3 mb-4">
+            <div className="text-lg font-bold text-gray-700">
+              対局室: {getRoomName()}
             </div>
-            <button
-              onClick={resetGame}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg
-                transition duration-200 ease-in-out transform hover:scale-105 shadow-lg text-base sm:text-lg"
-            >
-              もう一度プレイ
-            </button>
           </div>
-        ) : (
-          <div className="text-xl sm:text-2xl text-gray-700">
-            現在の手番: 
-            <span className={`font-bold ml-2 inline-block px-3 py-1 rounded-full ${
-              currentPlayer === '歩' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {getPlayerName(currentPlayer)}
-              <span className="mx-1">（{currentPlayer}）</span>
-            </span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className={`w-3 h-3 rounded-full ${
+                currentPlayer === '歩' ? 'bg-blue-500' : 'bg-red-500'
+              } mr-2`}></div>
+              <div className="text-lg">
+                現在の手番: <span className="font-bold">{getPlayerName(currentPlayer)}</span>
+              </div>
+            </div>
+            <div className={`px-4 py-2 rounded-lg ${
+              getPlayerRole() === '先手' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+            } font-bold`}>
+              あなた: {getPlayerRole()}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* エラーメッセージ */}
-      {error && (
-        <div className="text-center mb-6 p-3 bg-red-100 text-red-700 rounded-lg border border-red-200 shadow-sm">
-          {error.message}
+          <div className="flex justify-between mb-4 px-4">
+            <div className={`text-lg ${currentPlayer === '歩' ? 'font-bold' : ''}`}>
+              先手: {getTimeDisplay()?.firstPlayer}
+            </div>
+            <div className={`text-lg ${currentPlayer === 'と' ? 'font-bold' : ''}`}>
+              後手: {getTimeDisplay()?.secondPlayer}
+            </div>
+          </div>
+
+          {room.gameState.status === 'waiting' ? (
+            <div className="text-center py-4 bg-yellow-50 rounded-lg text-yellow-800">
+              対戦相手の入室を待っています...
+            </div>
+          ) : (
+            <div className={`text-center py-2 rounded-lg ${
+              isMyTurn
+                ? 'bg-green-50 text-green-800 border-2 border-green-500'
+                : 'bg-gray-50 text-gray-600'
+            }`}>
+              {isMyTurn
+                ? '🎯 あなたの番です'
+                : '⏳ 相手の番です'}
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 text-red-800 rounded-lg border border-red-200">
+              ⚠️ {error.message}
+            </div>
+          )}
         </div>
       )}
 
-      <div className="flex justify-center">
-        <div className="bg-white p-3 sm:p-8 rounded-xl shadow-xl border border-gray-100">
-          <div className="grid grid-cols-9 gap-0.5 sm:gap-1 bg-gray-200 p-0.5 sm:p-1 rounded-lg">
-            {board.map((row, i) =>
-              row.map((piece, j) => (
+      {room && room.gameState.status === 'playing' && (
+        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+          <div className="grid grid-cols-9 gap-1">
+            {board.map((row, rowIndex) =>
+              row.map((cell, colIndex) => (
                 <Cell
-                  key={`${i}-${j}`}
-                  piece={piece}
-                  onClick={() => handleCellClick(i, j)}
-                  isSelected={selectedCell ? selectedCell[0] === i && selectedCell[1] === j : false}
+                  key={`${rowIndex}-${colIndex}`}
+                  piece={cell}
+                  onClick={() => handleCellClick(rowIndex, colIndex)}
+                  isSelected={
+                    selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex
+                  }
                 />
               ))
             )}
           </div>
         </div>
-      </div>
+      )}
+
+      {winner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-2xl p-12 transform scale-100 animate-bounce-once max-w-lg w-full mx-4">
+            <div className="text-center">
+              <div className="text-5xl mb-6">🎉</div>
+              <div className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                {getPlayerName(winner)}の勝利！
+              </div>
+              <div className="text-gray-600 text-lg animate-pulse">
+                10秒後に自動的に退出します...
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -96,7 +174,7 @@ function GameContent() {
 function App() {
   return (
     <GameRoomProvider>
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-8">
+      <div className="min-h-screen bg-gray-100 py-8 px-4">
         <GameContent />
       </div>
     </GameRoomProvider>

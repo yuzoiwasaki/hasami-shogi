@@ -1,4 +1,4 @@
-import { Board, Player, GameError, GameErrorCode } from '../types';
+import { Board, Player, GameError, GameErrorCode, GameErrorCodeType, GameErrorMessages } from '../types';
 
 export const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
@@ -203,13 +203,9 @@ export const isValidMove = (
   );
 };
 
-export const createGameError = (code: GameErrorCode): GameError => {
-  const messages: Record<GameErrorCode, string> = {
-    [GameErrorCode.INVALID_TURN]: '自分の手番ではありません',
-  };
-
+export const createGameError = (code: GameErrorCodeType): GameError => {
   return {
     code,
-    message: messages[code],
+    message: GameErrorMessages[code],
   };
 }; 
