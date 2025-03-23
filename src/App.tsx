@@ -2,7 +2,6 @@ import { Cell } from './components/Cell';
 import { useOnlineHasamiShogi } from './hooks/useOnlineHasamiShogi';
 import { RoomManager } from './components/RoomManager';
 import { GameRoomProvider } from './contexts/GameRoomContext';
-import { INITIAL_TIME } from './hooks/useGameRoom';
 import { useState, useEffect } from 'react';
 import { SHOGI_ROOMS, RoomId } from './constants/rooms';
 import { useGameRoomContext } from './contexts/GameRoomContext';
@@ -14,7 +13,7 @@ type RoomStatus = {
   players: number;
 };
 
-function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void }) {
+function GameContent({ onLeave }: { onLeave: () => void }) {
   const {
     board,
     selectedCell,
@@ -22,11 +21,9 @@ function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void 
     winner,
     error,
     handleCellClick,
-    resetGame,
     getPlayerName,
     room,
     getPlayerRole,
-    getGameStatus,
     getRoomName,
     leaveRoom,
     isMyTurn,
@@ -221,7 +218,7 @@ function RoomList() {
   if (roomId) {
     return (
       <div className="min-h-screen bg-gray-100 py-8 px-4">
-        <GameContent roomId={roomId} onLeave={handleLeaveRoom} />
+        <GameContent onLeave={handleLeaveRoom} />
       </div>
     );
   }
