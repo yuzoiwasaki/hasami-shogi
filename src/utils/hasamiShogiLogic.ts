@@ -176,6 +176,78 @@ export const checkVerticalCaptures = (
   return capturedPositions;
 };
 
+// 駒が動けるかどうかを判定する関数
+export const canMove = (
+  board: Board,
+  row: number,
+  col: number,
+  piece: Player
+): boolean => {
+  const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+  for (const [dx, dy] of directions) {
+    for (let distance = 1; distance < 9; distance++) {
+      const newRow = row + dx * distance;
+      const newCol = col + dy * distance;
+
+      if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) break;
+      if (board[newRow][newCol] !== null) break;
+      if (!hasObstacleInPath(board, row, col, newRow, newCol)) {
+        return true;
+      } else {
+        break;
+      }
+    }
+  }
+  return false;
+};
+
+// 駒が囲まれているかどうかを判定する関数
+export const isPieceSurrounded = (
+  board: Board,
+  row: number,
+  col: number,
+  piece: Player
+): boolean => {
+  const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const opponent = piece === '歩' ? 'と' : '歩';
+
+  // 端の駒の場合
+  if (row === 0 || row === 8 || col === 0 || col === 8) {
+    let surroundedCount = 0;
+    let totalAdjacent = 0;
+
+    for (const [dx, dy] of directions) {
+      const newRow = row + dx;
+      const newCol = col + dy;
+
+      if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) continue;
+      
+      totalAdjacent++;
+      if (board[newRow][newCol] === opponent) {
+        surroundedCount++;
+      }
+    }
+
+    // 端の駒の場合、隣接するマスのうち、相手の駒に囲まれているマスの数が
+    // 隣接するマスの総数と等しい場合、囲まれていると判定
+    return surroundedCount === totalAdjacent;
+  }
+
+  // 中央の駒の場合
+  for (const [dx, dy] of directions) {
+    const newRow = row + dx;
+    const newCol = col + dy;
+
+    if (newRow < 0 || newRow >= 9 || newCol < 0 || newCol >= 9) continue;
+    if (board[newRow][newCol] !== opponent) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 export const checkCaptures = (
   board: Board,
   row: number,
@@ -186,7 +258,19 @@ export const checkCaptures = (
   const horizontalCaptures = checkHorizontalCaptures(board, row, col, piece, opponent);
   const verticalCaptures = checkVerticalCaptures(board, row, col, piece, opponent);
   
-  return [...horizontalCaptures, ...verticalCaptures];
+  // はさみによる駒の取得
+  const captures = [...horizontalCaptures, ...verticalCaptures];
+  
+  // 相手の駒が囲まれている場合の駒の取得
+  for (let i = 0; i < 9; i++) {
+    for (let j = 0; j < 9; j++) {
+      if (board[i][j] === opponent && isPieceSurrounded(board, i, j, opponent as Player)) {
+        captures.push([i, j]);
+      }
+    }
+  }
+  
+  return captures;
 };
 
 export const isValidMove = (
