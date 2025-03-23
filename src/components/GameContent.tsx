@@ -1,20 +1,8 @@
-import { Cell } from './components/Cell';
-import { useOnlineHasamiShogi } from './hooks/useOnlineHasamiShogi';
-import { RoomManager } from './components/RoomManager';
-import { GameRoomProvider } from './contexts/GameRoomContext';
-import { INITIAL_TIME } from './hooks/useGameRoom';
-import { useState, useEffect } from 'react';
-import { SHOGI_ROOMS, RoomId } from './constants/rooms';
-import { useGameRoomContext } from './contexts/GameRoomContext';
-import { ref, onValue, Unsubscribe } from 'firebase/database';
-import { db } from './firebase/config';
+import { Cell } from './Cell';
+import { useOnlineHasamiShogi } from '../hooks/useOnlineHasamiShogi';
+import { RoomManager } from './RoomManager';
 
-type RoomStatus = {
-  status: 'waiting' | 'playing';
-  players: number;
-};
-
-function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void }) {
+export function GameContent() {
   const {
     board,
     selectedCell,
@@ -34,11 +22,6 @@ function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void 
     resign,
   } = useOnlineHasamiShogi();
 
-  const handleLeaveRoom = async () => {
-    await leaveRoom();
-    onLeave();
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6 sm:mb-10">
@@ -47,7 +30,7 @@ function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void 
         </h1>
         {room && room.gameState.status === 'waiting' && (
           <button
-            onClick={handleLeaveRoom}
+            onClick={leaveRoom}
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg
               transition duration-200 ease-in-out transform hover:scale-105 shadow-sm text-sm flex items-center gap-1"
             title="対局から退出します"
@@ -184,98 +167,4 @@ function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void 
       )}
     </div>
   );
-}
-
-function RoomList() {
-  const [roomId, setRoomId] = useState<RoomId | null>(null);
-  const { enterRoom } = useGameRoomContext();
-  const [roomStatuses, setRoomStatuses] = useState<Record<RoomId, RoomStatus>>({} as Record<RoomId, RoomStatus>);
-
-  useEffect(() => {
-    const listeners: Unsubscribe[] = SHOGI_ROOMS.map(room => {
-      const roomRef = ref(db, `rooms/${room.id}`);
-      return onValue(roomRef, (snapshot) => {
-        const roomData = snapshot.val();
-        if (roomData) {
-          setRoomStatuses(prev => ({
-            ...prev,
-            [room.id]: {
-              status: roomData.gameState.status,
-              players: roomData.gameState.status === 'waiting' ? 1 : 2
-            }
-          }));
-        }
-      });
-    });
-
-    return () => {
-      listeners.forEach(unsubscribe => unsubscribe());
-    };
-  }, []);
-
-  const handleJoinRoom = async (roomId: RoomId) => {
-    try {
-      await enterRoom(roomId);
-      setRoomId(roomId);
-    } catch (error) {
-      console.error('入室に失敗しました:', error);
-    }
-  };
-
-  const handleLeaveRoom = () => {
-    setRoomId(null);
-  };
-
-  if (roomId) {
-    return (
-      <div className="min-h-screen bg-gray-100 py-8 px-4">
-        <GameContent roomId={roomId} onLeave={handleLeaveRoom} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 text-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800 font-japanese border-b-2 border-gray-800 pb-4">
-          はさみ将棋オンライン
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {SHOGI_ROOMS.map((room) => {
-            const status = roomStatuses[room.id];
-            const playerCount = status?.players || 0;
-            return (
-              <div
-                key={room.id}
-                className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
-              >
-                <h2 className="text-xl font-semibold mb-2 text-gray-800 font-japanese">{room.name}</h2>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">
-                    {playerCount}/2 プレイヤー
-                  </span>
-                  <button
-                    onClick={() => handleJoinRoom(room.id)}
-                    className="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded transition-colors duration-300 font-japanese"
-                  >
-                    入室
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <GameRoomProvider>
-      <RoomList />
-    </GameRoomProvider>
-  );
-}
-
-export default App;
+} 

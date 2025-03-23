@@ -149,6 +149,8 @@ export const useOnlineHasamiShogi = () => {
     const timer = setTimeout(() => {
       setWinner(null);
       leaveRoom();
+      // トップページに戻るために、window.locationを更新
+      window.location.reload();
     }, 10000);
 
     // クリーンアップ関数を返す
@@ -248,20 +250,12 @@ export const useOnlineHasamiShogi = () => {
     // 投了時の状態を更新（Firebaseのデータベースを直接更新）
     await update(ref(db, `rooms/${room.id}/gameState`), {
       board,
-      currentTurn: currentPlayer,
+      currentTurn: winner,
       status: 'finished',
-      winner
+      winner,
     });
-    
-    // エラー表示をクリア
-    setError(null);
 
-    // 10秒後に部屋を削除
-    setTimeout(async () => {
-      const roomRef = ref(db, `rooms/${room.id}`);
-      await set(roomRef, null);
-      leaveRoom();
-    }, 10000);
+    handleGameEnd(winner);
   };
 
   const handleCellClick = useCallback(async (row: number, col: number) => {
