@@ -31,8 +31,8 @@ export const useGameRoom = () => {
 
       if (!currentRoom) return;
 
-      // 対局開始前の場合は必ず対局室を削除
-      if (currentRoom.gameState.status === 'waiting') {
+      // 対局開始前または対局終了時は対局室を削除
+      if (currentRoom.gameState.status === 'waiting' || currentRoom.gameState.status === 'finished') {
         await set(roomRef, null);
         setRoom(null);
         setPlayerId(null);
@@ -40,53 +40,6 @@ export const useGameRoom = () => {
         setIsFirstPlayer(null);
         return;
       }
-
-      // 対局終了時も対局室を削除
-      if (currentRoom.gameState.status === 'finished') {
-        await set(roomRef, null);
-        setRoom(null);
-        setPlayerId(null);
-        setRoomId(null);
-        setIsFirstPlayer(null);
-        return;
-      }
-
-      // プレイ中の場合の処理
-      if (currentRoom.firstPlayerId === playerId) {
-        // 先手が退出
-        await set(roomRef, currentRoom.secondPlayerId ? {
-          ...currentRoom,
-          firstPlayerId: currentRoom.secondPlayerId,
-          secondPlayerId: null,
-          gameState: {
-            ...currentRoom.gameState,
-            status: 'waiting',
-            isFirstPlayerTurn: true,
-            firstPlayerTime: INITIAL_TIME,
-            secondPlayerTime: INITIAL_TIME,
-            lastMoveTime: Date.now(),
-          }
-        } : null);
-      } else if (currentRoom.secondPlayerId === playerId) {
-        // 後手が退出
-        await set(roomRef, currentRoom.firstPlayerId ? {
-          ...currentRoom,
-          secondPlayerId: null,
-          gameState: {
-            ...currentRoom.gameState,
-            status: 'waiting',
-            isFirstPlayerTurn: true,
-            firstPlayerTime: INITIAL_TIME,
-            secondPlayerTime: INITIAL_TIME,
-            lastMoveTime: Date.now(),
-          }
-        } : null);
-      }
-
-      setRoom(null);
-      setPlayerId(null);
-      setRoomId(null);
-      setIsFirstPlayer(null);
     } catch (error) {
       console.error('Error leaving room:', error);
     }
