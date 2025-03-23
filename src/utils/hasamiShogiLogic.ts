@@ -206,10 +206,11 @@ export const canMove = (
 export const isPieceSurrounded = (
   board: Board,
   row: number,
-  col: number,
-  piece: Player
+  col: number
 ): boolean => {
   const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const piece = board[row][col];
+  if (!piece) return false;
   const opponent = piece === '歩' ? 'と' : '歩';
 
   // 端の駒の場合
@@ -264,7 +265,7 @@ export const checkCaptures = (
   // 相手の駒が囲まれている場合の駒の取得
   for (let i = 0; i < 9; i++) {
     for (let j = 0; j < 9; j++) {
-      if (board[i][j] === opponent && isPieceSurrounded(board, i, j, opponent as Player)) {
+      if (board[i][j] === opponent && isPieceSurrounded(board, i, j)) {
         captures.push([i, j]);
       }
     }
