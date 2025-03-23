@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ref, set, onValue, get, update } from 'firebase/database';
 import { db } from '../firebase/config';
 import type { GameRoom, Board, Player } from '../types';
-import { createInitialBoard } from '../utils/hasamiShogiLogic';
+import { createInitialBoard, checkWinner } from '../utils/hasamiShogiLogic';
 
 const ROOM_ERRORS = {
   NOT_FOUND: '対局室が見つかりません',
@@ -103,11 +103,9 @@ export const useGameRoom = () => {
 
     try {
       // 勝者判定
-      const firstPlayerCount = board.flat().filter(cell => cell === '歩').length;
-      const secondPlayerCount = board.flat().filter(cell => cell === 'と').length;
+      const winner = checkWinner(board, currentTurn);
 
-      if (firstPlayerCount === 0 || secondPlayerCount === 0) {
-        const winner = firstPlayerCount === 0 ? 'と' : '歩';
+      if (winner) {
         // 勝利状態を更新
         await update(ref(db, `rooms/${room.id}/gameState`), {
           board,

@@ -157,8 +157,7 @@ export const useOnlineHasamiShogi = () => {
         });
 
         // 勝者判定
-        const firstPlayerCount = newBoard.flat().filter(cell => cell === '歩').length;
-        const secondPlayerCount = newBoard.flat().filter(cell => cell === 'と').length;
+        const winner = checkWinner(newBoard, currentTurn);
 
         // 経過時間を計算して現在の手番のプレイヤーの時間を更新
         const currentTime = Date.now();
@@ -177,15 +176,11 @@ export const useOnlineHasamiShogi = () => {
           firstPlayerTime: updatedFirstPlayerTime,
           secondPlayerTime: updatedSecondPlayerTime,
           lastMoveTime: currentTime,
-          ...(firstPlayerCount === 0 ? { status: 'finished', winner: 'と' } :
-              secondPlayerCount === 0 ? { status: 'finished', winner: '歩' } :
-              { status: 'playing' })
+          ...(winner ? { status: 'finished', winner } : { status: 'playing' })
         });
 
-        if (firstPlayerCount === 0) {
-          handleGameEnd('と');
-        } else if (secondPlayerCount === 0) {
-          handleGameEnd('歩');
+        if (winner) {
+          handleGameEnd(winner);
         }
 
         setSelectedCell(null);
