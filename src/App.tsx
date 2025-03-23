@@ -29,6 +29,26 @@ function GameContent() {
     getTimeDisplay,
     resign,
   } = useOnlineHasamiShogi();
+  const [countdown, setCountdown] = useState(10);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (winner) {
+      timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            window.location.reload();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [winner]);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -159,7 +179,7 @@ function GameContent() {
                 {getPlayerName(winner)}の勝利！
               </div>
               <div className="text-gray-600 text-lg animate-pulse">
-                10秒後に自動的に退出します...
+                {countdown}秒後に自動的に退出します...
               </div>
             </div>
           </div>
