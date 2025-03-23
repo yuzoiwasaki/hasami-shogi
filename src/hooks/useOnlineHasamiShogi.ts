@@ -68,7 +68,6 @@ export const useOnlineHasamiShogi = () => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [localFirstPlayerTime, setLocalFirstPlayerTime] = useState<number>(INITIAL_TIME);
   const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(INITIAL_TIME);
-  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
 
   // roomの状態が変更されたら同期
   useEffect(() => {
@@ -205,7 +204,6 @@ export const useOnlineHasamiShogi = () => {
 
     setLocalFirstPlayerTime(firstPlayerTime);
     setLocalSecondPlayerTime(secondPlayerTime);
-    setLastUpdateTime(currentTime);
   }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, room?.gameState.lastMoveTime, room?.gameState.currentTurn]);
 
   // リアルタイムでの時間更新（より頻繁に更新）
