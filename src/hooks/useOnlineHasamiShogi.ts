@@ -68,6 +68,7 @@ export const useOnlineHasamiShogi = () => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [localFirstPlayerTime, setLocalFirstPlayerTime] = useState<number>(INITIAL_TIME);
   const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(INITIAL_TIME);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
 
   // roomの状態が変更されたら同期
   useEffect(() => {
@@ -98,20 +99,6 @@ export const useOnlineHasamiShogi = () => {
     return piece === '歩' ? '先手' : '後手';
   };
 
-  const getTimeDisplay = () => {
-    if (!room) return null;
-    return {
-      firstPlayer: formatTime(localFirstPlayerTime),
-      secondPlayer: formatTime(localSecondPlayerTime),
-    };
-  };
-
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
   const handleGameEnd = useCallback((winner: '歩' | 'と') => {
     setWinner(winner);
     setError(null);
@@ -127,6 +114,136 @@ export const useOnlineHasamiShogi = () => {
     // クリーンアップ関数を返す
     return () => clearTimeout(timer);
   }, [leaveRoom]);
+
+  const handleCellClick = useCallback(async (row: number, col: number) => {
+    if (!room || !isMyTurn || isFirstPlayer === null) return;
+
+    try {
+      const newBoard = [...board];
+      const currentTurn = currentPlayer;
+
+      if (selectedCell) {
+        // 駒を移動
+        const [fromRow, fromCol] = selectedCell;
+        
+        // 移動のバリデーション
+        if (!isValidMove(board, fromRow, fromCol, row, col)) {
+          setError(createGameError(GameErrorCode.INVALID_MOVE));
+          setSelectedCell(null);
+          return;
+        }
+
+        newBoard[row][col] = newBoard[fromRow][fromCol];
+        newBoard[fromRow][fromCol] = null;
+
+        // 駒を取る
+        const capturedPieces = checkCaptures(newBoard, row, col, currentTurn);
+        capturedPieces.forEach(([r, c]) => {
+          newBoard[r][c] = null;
+        });
+
+        // 勝者判定
+        const firstPlayerCount = newBoard.flat().filter(cell => cell === '歩').length;
+        const secondPlayerCount = newBoard.flat().filter(cell => cell === 'と').length;
+
+        // 経過時間を計算して現在の手番のプレイヤーの時間を更新
+        const currentTime = Date.now();
+        const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
+        const updatedFirstPlayerTime = currentTurn === '歩' 
+          ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
+          : room.gameState.firstPlayerTime;
+        const updatedSecondPlayerTime = currentTurn === 'と'
+          ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
+          : room.gameState.secondPlayerTime;
+
+        // Firebaseのデータベースを直接更新
+        await update(ref(db, `rooms/${room.id}/gameState`), {
+          board: newBoard,
+          currentTurn: currentTurn === '歩' ? 'と' : '歩',
+          firstPlayerTime: updatedFirstPlayerTime,
+          secondPlayerTime: updatedSecondPlayerTime,
+          lastMoveTime: currentTime,
+          ...(firstPlayerCount === 0 ? { status: 'finished', winner: 'と' } :
+              secondPlayerCount === 0 ? { status: 'finished', winner: '歩' } :
+              { status: 'playing' })
+        });
+
+        if (firstPlayerCount === 0) {
+          handleGameEnd('と');
+        } else if (secondPlayerCount === 0) {
+          handleGameEnd('歩');
+        }
+
+        setSelectedCell(null);
+        setError(null);
+      } else {
+        // 駒を選択
+        if (newBoard[row][col] === currentTurn) {
+          setSelectedCell([row, col]);
+          setError(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling cell click:', error);
+      setError(createGameError(GameErrorCode.INVALID_MOVE));
+    }
+  }, [room, board, currentPlayer, selectedCell, isMyTurn, handleGameEnd, isFirstPlayer]);
+
+  // サーバーの時間を基にローカルの時間を更新
+  useEffect(() => {
+    if (!room) return;
+    const currentTime = Date.now();
+    const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
+    
+    // 現在の手番のプレイヤーの時間のみ経過時間を引く
+    const firstPlayerTime = room.gameState.currentTurn === '歩'
+      ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
+      : room.gameState.firstPlayerTime;
+    const secondPlayerTime = room.gameState.currentTurn === 'と'
+      ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
+      : room.gameState.secondPlayerTime;
+
+    setLocalFirstPlayerTime(firstPlayerTime);
+    setLocalSecondPlayerTime(secondPlayerTime);
+    setLastUpdateTime(currentTime);
+  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, room?.gameState.lastMoveTime, room?.gameState.currentTurn]);
+
+  // リアルタイムでの時間更新（より頻繁に更新）
+  useEffect(() => {
+    if (!room || room.gameState.status !== 'playing') return;
+
+    const timer = setInterval(() => {
+      const currentTime = Date.now();
+      const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
+      
+      // サーバーの時間を基準に計算
+      const firstPlayerTime = room.gameState.currentTurn === '歩'
+        ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
+        : room.gameState.firstPlayerTime;
+      const secondPlayerTime = room.gameState.currentTurn === 'と'
+        ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
+        : room.gameState.secondPlayerTime;
+
+      setLocalFirstPlayerTime(firstPlayerTime);
+      setLocalSecondPlayerTime(secondPlayerTime);
+    }, 100); // より頻繁に更新（100ミリ秒ごと）
+
+    return () => clearInterval(timer);
+  }, [room?.gameState.status, room?.gameState.currentTurn, room?.gameState.lastMoveTime, room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime]);
+
+  const getTimeDisplay = useCallback(() => {
+    if (!room) return null;
+    return {
+      firstPlayer: formatTime(localFirstPlayerTime),
+      secondPlayer: formatTime(localSecondPlayerTime),
+    };
+  }, [room, localFirstPlayerTime, localSecondPlayerTime]);
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   // 勝利判定（入室直後はスキップ）
   useEffect(() => {
@@ -144,44 +261,21 @@ export const useOnlineHasamiShogi = () => {
     }
   }, [board, currentPlayer, handleGameEnd, room?.gameState.status, room?.gameState.winner, winner]);
 
-  // 時間の同期
-  useEffect(() => {
-    if (!room) return;
-    setLocalFirstPlayerTime(room.gameState.firstPlayerTime);
-    setLocalSecondPlayerTime(room.gameState.secondPlayerTime);
-  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime]);
-
-  // タイマーの更新
+  // 時間切れの判定
   useEffect(() => {
     if (!room || room.gameState.status !== 'playing') return;
 
-    const timer = setInterval(() => {
-      // 現在の手番のプレイヤーの時間を減らす
-      if (currentPlayer === '歩') {
-        setLocalFirstPlayerTime(prev => Math.max(0, prev - 1));
-      } else {
-        setLocalSecondPlayerTime(prev => Math.max(0, prev - 1));
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [room?.gameState.status, currentPlayer]);
-
-  // 時間切れの判定
-  useEffect(() => {
-    if (!room || room.gameState.status === 'waiting') return;
-
     // 現在の手番のプレイヤーの時間が切れているかチェック
-    const isTimeUp = currentPlayer === '歩'
-      ? localFirstPlayerTime <= 0
-      : localSecondPlayerTime <= 0;
+    const currentPlayerTime = room.gameState.currentTurn === '歩'
+      ? localFirstPlayerTime
+      : localSecondPlayerTime;
 
-    if (isTimeUp) {
-      const winner: Player = currentPlayer === '歩' ? 'と' : '歩';
+    if (currentPlayerTime <= 0) {
+      const winner = room.gameState.currentTurn === '歩' ? 'と' : '歩';
       handleGameEnd(winner);
       setError(createGameError(GameErrorCode.TIME_UP));
     }
-  }, [localFirstPlayerTime, localSecondPlayerTime, currentPlayer, handleGameEnd]);
+  }, [room, localFirstPlayerTime, localSecondPlayerTime, handleGameEnd]);
 
   const resetGame = async () => {
     const initialBoard = createInitialBoard();
@@ -228,64 +322,6 @@ export const useOnlineHasamiShogi = () => {
 
     handleGameEnd(winner);
   };
-
-  const handleCellClick = useCallback(async (row: number, col: number) => {
-    if (!room || !isMyTurn || isFirstPlayer === null) return;
-
-    try {
-      const newBoard = [...board];
-      const currentTurn = currentPlayer;
-
-      if (selectedCell) {
-        // 駒を移動
-        const [fromRow, fromCol] = selectedCell;
-        
-        // 移動のバリデーション
-        if (!isValidMove(board, fromRow, fromCol, row, col)) {
-          setError(createGameError(GameErrorCode.INVALID_MOVE));
-          setSelectedCell(null);
-          return;
-        }
-
-        newBoard[row][col] = newBoard[fromRow][fromCol];
-        newBoard[fromRow][fromCol] = null;
-
-        // 駒を取る
-        const capturedPieces = checkCaptures(newBoard, row, col, currentTurn);
-        capturedPieces.forEach(([r, c]) => {
-          newBoard[r][c] = null;
-        });
-
-        // 勝者判定
-        const firstPlayerCount = newBoard.flat().filter((cell: string | null) => cell === '歩').length;
-        const secondPlayerCount = newBoard.flat().filter((cell: string | null) => cell === 'と').length;
-
-        if (firstPlayerCount === 0) {
-          await updateGameState(newBoard, currentTurn === '歩' ? 'と' : '歩', isFirstPlayer);
-          handleGameEnd('と');
-        } else if (secondPlayerCount === 0) {
-          await updateGameState(newBoard, currentTurn === '歩' ? 'と' : '歩', isFirstPlayer);
-          handleGameEnd('歩');
-        } else {
-          await updateGameState(newBoard, currentTurn === '歩' ? 'と' : '歩', isFirstPlayer);
-        }
-
-        setSelectedCell(null);
-        setError(null);
-      } else {
-        // 駒を選択
-        if (newBoard[row][col] === currentTurn) {
-          setSelectedCell([row, col]);
-          setError(null);
-        }
-      }
-    } catch (error) {
-      console.error('Error handling cell click:', error);
-      setError({
-        message: '手の実行中にエラーが発生しました'
-      });
-    }
-  }, [room, board, currentPlayer, selectedCell, isMyTurn, updateGameState, handleGameEnd, isFirstPlayer]);
 
   return {
     board,
