@@ -10,7 +10,7 @@ import {
 } from '../utils/hasamiShogiLogic';
 import { SHOGI_ROOMS } from '../constants/rooms';
 import { INITIAL_TIME } from '../hooks/useGameRoom';
-import { ref, update } from 'firebase/database';
+import { ref, update, set } from 'firebase/database';
 import { db } from '../firebase/config';
 
 export const useOnlineHasamiShogi = () => {
@@ -294,6 +294,12 @@ export const useOnlineHasamiShogi = () => {
       const winner = room.gameState.currentTurn === '歩' ? 'と' : '歩';
       handleGameEnd(winner);
       setError(createGameError(GameErrorCode.TIME_UP));
+
+      // 時間切れの場合も部屋を削除
+      setTimeout(async () => {
+        const roomRef = ref(db, `rooms/${room.id}`);
+        await set(roomRef, null);
+      }, 10000);
     }
   }, [room, localFirstPlayerTime, localSecondPlayerTime, handleGameEnd]);
 
