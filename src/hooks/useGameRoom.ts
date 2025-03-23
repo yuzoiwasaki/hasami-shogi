@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ref, set, onValue, get, update } from 'firebase/database';
 import { db } from '../firebase/config';
-import type { GameRoom, Board, Player, GameError } from '../types';
-import { GameErrorCode } from '../types';
+import type { GameRoom, Board, Player } from '../types';
 import { createInitialBoard } from '../utils/hasamiShogiLogic';
 
 const ROOM_ERRORS = {
