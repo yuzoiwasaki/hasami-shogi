@@ -2,25 +2,26 @@
 export type Player = '歩' | 'と';
 
 // 盤面の型
-export type Board = (string | null)[][];
+export type Board = (Player | null)[][];
 
 // セルの位置を表す型
 export type Position = [number, number];
 
 // ゲームのエラー型
 export type GameError = {
+  code: GameErrorCode;
   message: string;
-  code: GameErrorCodeType;
 };
 
 // エラーコードの定義
-export const GameErrorCode = {
-  NOT_YOUR_TURN: 'NOT_YOUR_TURN',
-  WRONG_PIECE: 'WRONG_PIECE',
-  INVALID_MOVE: 'INVALID_MOVE',
-  TIME_UP: 'TIME_UP',
-  RESIGNED: 'RESIGNED',
-} as const;
+export enum GameErrorCode {
+  INVALID_MOVE = 'INVALID_MOVE',
+  NOT_YOUR_TURN = 'NOT_YOUR_TURN',
+  GAME_ENDED = 'GAME_ENDED',
+  TIME_UP = 'TIME_UP',
+  WRONG_PIECE = 'WRONG_PIECE',
+  RESIGNED = 'RESIGNED',
+}
 
 // エラーメッセージの定義
 export const GameErrorMessages = {
@@ -40,29 +41,23 @@ export type CellProps = {
   isSelected: boolean;
 };
 
-export type GameRoom = {
-  id: string;
-  firstPlayerId: string;
-  secondPlayerId?: string | null;
-  gameState: {
-    board: Board;
-    currentTurn: Player;
-    status: 'waiting' | 'playing' | 'finished';
-    isFirstPlayerTurn: boolean;
-    firstPlayerTime: number;
-    secondPlayerTime: number;
-    lastMoveTime: number;
-    winner?: Player;
-  };
+export type GameState = {
+  status: 'waiting' | 'playing' | 'finished';
+  currentTurn: Player;
+  board: Board;
+  firstPlayerId: string | null;
+  secondPlayerId: string | null;
+  winner: Player | null;
+  error: GameError | null;
+  firstPlayerTime: number;
+  secondPlayerTime: number;
+  lastMoveTime: number;
+  isFirstPlayerTurn: boolean;
 };
 
-export type GameState = {
-  board: Board;
-  currentTurn: Player;
-  status: 'waiting' | 'playing' | 'finished';
-  isFirstPlayerTurn: boolean;
-  firstPlayerTime: number; // 先手の残り時間（秒）
-  secondPlayerTime: number; // 後手の残り時間（秒）
-  lastMoveTime: number; // 最後の手が打たれた時刻（ミリ秒）
-  winner?: Player;
+export type GameRoom = {
+  id: string;
+  firstPlayerId: string | null;
+  secondPlayerId: string | null;
+  gameState: GameState;
 }; 
