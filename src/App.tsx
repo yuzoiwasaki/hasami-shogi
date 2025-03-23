@@ -13,7 +13,7 @@ type RoomStatus = {
   players: number;
 };
 
-function GameContent({ onLeave }: { onLeave: () => void }) {
+function GameContent() {
   const {
     board,
     selectedCell,
@@ -25,7 +25,6 @@ function GameContent({ onLeave }: { onLeave: () => void }) {
     room,
     getPlayerRole,
     getRoomName,
-    leaveRoom,
     isMyTurn,
     getTimeDisplay,
     resign,
@@ -213,7 +212,7 @@ function RoomList() {
   if (roomId) {
     return (
       <div className="min-h-screen bg-gray-100 py-8 px-4">
-        <GameContent onLeave={handleLeaveRoom} />
+        <GameContent />
       </div>
     );
   }
