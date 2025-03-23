@@ -3,7 +3,7 @@ import { useGameRoomContext } from '../contexts/GameRoomContext';
 export function RoomManager() {
   const { room, leaveRoom } = useGameRoomContext();
 
-  if (!room) {
+  if (!room || room.gameState.status === 'playing') {
     return null;
   }
 

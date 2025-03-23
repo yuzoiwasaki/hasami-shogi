@@ -45,20 +45,7 @@ function GameContent({ roomId, onLeave }: { roomId: RoomId; onLeave: () => void 
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 font-japanese">
           はさみ将棋
         </h1>
-        {room && room.gameState.status === 'waiting' && (
-          <button
-            onClick={handleLeaveRoom}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg
-              transition duration-200 ease-in-out transform hover:scale-105 shadow-sm text-sm flex items-center gap-1"
-            title="対局から退出します"
-          >
-            退出
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-          </button>
-        )}
-        {room && room.gameState.status === 'playing' && (
+        {room && room.gameState && room.gameState.status === 'playing' && (
           <button
             onClick={() => {
               if (window.confirm('投了しますか？')) {
@@ -244,6 +231,7 @@ function RoomList() {
           {SHOGI_ROOMS.map((room) => {
             const status = roomStatuses[room.id];
             const playerCount = status?.players || 0;
+            const isPlaying = status?.status === 'playing';
             return (
               <div
                 key={room.id}
@@ -252,14 +240,16 @@ function RoomList() {
                 <h2 className="text-xl font-semibold mb-2 text-gray-800 font-japanese">{room.name}</h2>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">
-                    {playerCount}/2 プレイヤー
+                    {isPlaying ? '対局中' : `${playerCount}/2 プレイヤー`}
                   </span>
-                  <button
-                    onClick={() => handleJoinRoom(room.id)}
-                    className="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded transition-colors duration-300 font-japanese"
-                  >
-                    入室
-                  </button>
+                  {!isPlaying && (
+                    <button
+                      onClick={() => handleJoinRoom(room.id)}
+                      className="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded transition-colors duration-300 font-japanese"
+                    >
+                      入室
+                    </button>
+                  )}
                 </div>
               </div>
             );
