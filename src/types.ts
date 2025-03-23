@@ -24,15 +24,16 @@ export enum GameErrorCode {
 }
 
 // エラーメッセージの定義
-export const GameErrorMessages = {
+export const GameErrorMessages: Record<GameErrorCode, string> = {
   [GameErrorCode.NOT_YOUR_TURN]: '相手の番です',
   [GameErrorCode.WRONG_PIECE]: '自分の駒を選択してください',
   [GameErrorCode.INVALID_MOVE]: 'そこには移動できません',
   [GameErrorCode.TIME_UP]: '時間切れです',
   [GameErrorCode.RESIGNED]: '投了により対局を終了しました',
-} as const;
+  [GameErrorCode.GAME_ENDED]: '対局は終了しました',
+};
 
-export type GameErrorCodeType = keyof typeof GameErrorCode;
+export type GameErrorCodeType = GameErrorCode;
 
 // Cellコンポーネントのprops型
 export type CellProps = {

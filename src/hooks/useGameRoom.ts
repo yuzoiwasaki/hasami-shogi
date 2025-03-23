@@ -104,6 +104,7 @@ export const useGameRoom = () => {
       const newRoom: GameRoom = {
         id: roomIdToEnter,
         firstPlayerId: newPlayerId,
+        secondPlayerId: null,
         gameState: {
           board: createInitialBoard(),
           currentTurn: '歩',
@@ -112,6 +113,10 @@ export const useGameRoom = () => {
           firstPlayerTime: INITIAL_TIME,
           secondPlayerTime: INITIAL_TIME,
           lastMoveTime: Date.now(),
+          firstPlayerId: newPlayerId,
+          secondPlayerId: null,
+          winner: null,
+          error: null,
         }
       };
       await set(roomRef, newRoom);
