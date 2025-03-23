@@ -31,6 +31,16 @@ export const useGameRoom = () => {
 
     if (!currentRoom) return;
 
+    // ゲームが終了している場合は部屋を直接削除
+    if (currentRoom.gameState.status === 'finished') {
+      await set(roomRef, null);
+      setRoom(null);
+      setPlayerId(null);
+      setRoomId(null);
+      setIsFirstPlayer(null);
+      return;
+    }
+
     if (currentRoom.firstPlayerId === playerId) {
       // 先手が退出した場合
       if (!currentRoom.secondPlayerId) {
@@ -133,47 +143,34 @@ export const useGameRoom = () => {
       const firstPlayerCount = board.flat().filter(cell => cell === '歩').length;
       const secondPlayerCount = board.flat().filter(cell => cell === 'と').length;
 
-      if (firstPlayerCount === 0) {
-        // 後手の勝利
+      if (firstPlayerCount === 0 || secondPlayerCount === 0) {
+        const winner = firstPlayerCount === 0 ? 'と' : '歩';
+        // 勝利状態を更新
         await update(ref(db, `rooms/${room.id}/gameState`), {
           board,
           currentTurn,
           status: 'finished',
-          winner: 'と'
+          winner
         });
         // 10秒後に部屋を削除
         setTimeout(async () => {
           const roomRef = ref(db, `rooms/${room.id}`);
           await set(roomRef, null);
-          leaveRoom();
-        }, 10000);
-      } else if (secondPlayerCount === 0) {
-        // 先手の勝利
-        await update(ref(db, `rooms/${room.id}/gameState`), {
-          board,
-          currentTurn,
-          status: 'finished',
-          winner: '歩'
-        });
-        // 10秒後に部屋を削除
-        setTimeout(async () => {
-          const roomRef = ref(db, `rooms/${room.id}`);
-          await set(roomRef, null);
-          leaveRoom();
         }, 10000);
       } else {
         // 通常の手
         await update(ref(db, `rooms/${room.id}/gameState`), {
           board,
           currentTurn,
-          status: 'playing'
+          status: 'playing',
+          isFirstPlayerTurn
         });
       }
     } catch (error) {
       console.error('Error updating game state:', error);
       throw error;
     }
-  }, [room, leaveRoom]);
+  }, [room]);
 
   const updateRoomState = (newRoom: GameRoom, newPlayerId: string) => {
     setRoom(newRoom);
