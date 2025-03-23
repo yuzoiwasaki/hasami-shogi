@@ -10,7 +10,7 @@ import {
 } from '../utils/hasamiShogiLogic';
 import { SHOGI_ROOMS } from '../constants/rooms';
 import { INITIAL_TIME } from '../hooks/useGameRoom';
-import { ref, update, set } from 'firebase/database';
+import { ref, update } from 'firebase/database';
 import { db } from '../firebase/config';
 
 export const useOnlineHasamiShogi = () => {
@@ -59,35 +59,6 @@ export const useOnlineHasamiShogi = () => {
     }
 
     return board;
-  };
-
-  // 盤面データをFirebase用のオブジェクトに変換
-  const boardToObject = (board: Board) => {
-    try {
-      const obj: { [key: number]: { [key: number]: string | null } } = {};
-      
-      for (let i = 0; i < 9; i++) {
-        const rowObj: { [key: number]: string | null } = {};
-        let hasNonNull = false;
-        
-        for (let j = 0; j < 9; j++) {
-          const cell = board[i][j];
-          if (cell !== null) {
-            rowObj[j] = cell;
-            hasNonNull = true;
-          }
-        }
-        
-        if (hasNonNull) {
-          obj[i] = rowObj;
-        }
-      }
-      
-      return obj;
-    } catch (error) {
-      console.error('Error converting to object:', error);
-      return {};
-    }
   };
 
   const [board, setBoard] = useState<Board>(createInitialBoard);
