@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createInitialBoard } from './useHasamiShogi.logic';
-import { isValidMove } from './useHasamiShogi.logic';
-import { hasObstacleInPath } from './useHasamiShogi.logic';
+import { createInitialBoard, isValidMove, hasObstacleInPath } from './hasamiShogiLogic';
 
 describe('はさみ将棋のロジック', () => {
   describe('初期盤面', () => {
