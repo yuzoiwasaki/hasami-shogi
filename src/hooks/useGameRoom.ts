@@ -24,30 +24,37 @@ export const useGameRoom = () => {
   const leaveRoom = useCallback(async () => {
     if (!room?.id || !playerId) return;
 
-    const roomRef = ref(db, `rooms/${room.id}`);
-    const snapshot = await get(roomRef);
-    const currentRoom = snapshot.val() as GameRoom | null;
+    try {
+      const roomRef = ref(db, `rooms/${room.id}`);
+      const snapshot = await get(roomRef);
+      const currentRoom = snapshot.val() as GameRoom | null;
 
-    if (!currentRoom) return;
+      if (!currentRoom) return;
 
-    // ゲームが終了している場合は部屋を直接削除
-    if (currentRoom.gameState.status === 'finished') {
-      await set(roomRef, null);
-      setRoom(null);
-      setPlayerId(null);
-      setRoomId(null);
-      setIsFirstPlayer(null);
-      return;
-    }
-
-    if (currentRoom.firstPlayerId === playerId) {
-      // 先手が退出した場合
-      if (!currentRoom.secondPlayerId) {
-        // 後手がいない場合は部屋を削除
+      // 待機中の場合は必ず部屋を削除
+      if (currentRoom.gameState.status === 'waiting') {
         await set(roomRef, null);
-      } else {
-        // 後手がいる場合は先手を削除
-        await set(roomRef, {
+        setRoom(null);
+        setPlayerId(null);
+        setRoomId(null);
+        setIsFirstPlayer(null);
+        return;
+      }
+
+      // ゲーム終了時も部屋を削除
+      if (currentRoom.gameState.status === 'finished') {
+        await set(roomRef, null);
+        setRoom(null);
+        setPlayerId(null);
+        setRoomId(null);
+        setIsFirstPlayer(null);
+        return;
+      }
+
+      // プレイ中の場合の処理
+      if (currentRoom.firstPlayerId === playerId) {
+        // 先手が退出
+        await set(roomRef, currentRoom.secondPlayerId ? {
           ...currentRoom,
           firstPlayerId: currentRoom.secondPlayerId,
           secondPlayerId: null,
@@ -59,16 +66,10 @@ export const useGameRoom = () => {
             secondPlayerTime: INITIAL_TIME,
             lastMoveTime: Date.now(),
           }
-        });
-      }
-    } else if (currentRoom.secondPlayerId === playerId) {
-      // 後手が退出した場合
-      if (!currentRoom.firstPlayerId) {
-        // 先手がいない場合は部屋を削除
-        await set(roomRef, null);
-      } else {
-        // 先手がいる場合は後手を削除
-        await set(roomRef, {
+        } : null);
+      } else if (currentRoom.secondPlayerId === playerId) {
+        // 後手が退出
+        await set(roomRef, currentRoom.firstPlayerId ? {
           ...currentRoom,
           secondPlayerId: null,
           gameState: {
@@ -79,14 +80,16 @@ export const useGameRoom = () => {
             secondPlayerTime: INITIAL_TIME,
             lastMoveTime: Date.now(),
           }
-        });
+        } : null);
       }
-    }
 
-    setRoom(null);
-    setPlayerId(null);
-    setRoomId(null);
-    setIsFirstPlayer(null);
+      setRoom(null);
+      setPlayerId(null);
+      setRoomId(null);
+      setIsFirstPlayer(null);
+    } catch (error) {
+      console.error('Error leaving room:', error);
+    }
   }, [room?.id, playerId]);
 
   const enterRoom = async (roomIdToEnter: string) => {
@@ -180,14 +183,14 @@ export const useGameRoom = () => {
 
   // 部屋の状態監視
   useEffect(() => {
-    if (!roomId || !playerId) return;
+    if (!roomId) return;
 
     const roomRef = ref(db, `rooms/${roomId}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
       const data = snapshot.val() as GameRoom | null;
       if (data) {
         setRoom(data);
-        setIsFirstPlayer(data.firstPlayerId === playerId);
+        setIsFirstPlayer(playerId ? data.firstPlayerId === playerId : null);
       } else {
         // 部屋が削除された場合
         setRoom(null);

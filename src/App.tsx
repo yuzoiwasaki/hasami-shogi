@@ -175,24 +175,31 @@ function RoomList() {
   const [roomStatuses, setRoomStatuses] = useState<Record<RoomId, RoomStatus>>({} as Record<RoomId, RoomStatus>);
 
   useEffect(() => {
-    const listeners: Unsubscribe[] = SHOGI_ROOMS.map(room => {
-      const roomRef = ref(db, `rooms/${room.id}`);
-      return onValue(roomRef, (snapshot) => {
+    const roomRefs = SHOGI_ROOMS.map(room => ref(db, `rooms/${room.id}`));
+    const unsubscribes = roomRefs.map((roomRef, index) => 
+      onValue(roomRef, (snapshot) => {
         const roomData = snapshot.val();
-        if (roomData) {
-          setRoomStatuses(prev => ({
-            ...prev,
-            [room.id]: {
+        setRoomStatuses(prev => {
+          const newStatuses = { ...prev };
+          if (roomData) {
+            let playerCount = 0;
+            if (roomData.firstPlayerId) playerCount++;
+            if (roomData.secondPlayerId) playerCount++;
+            
+            newStatuses[SHOGI_ROOMS[index].id] = {
               status: roomData.gameState.status,
-              players: roomData.gameState.status === 'waiting' ? 1 : 2
-            }
-          }));
-        }
-      });
-    });
+              players: playerCount
+            };
+          } else {
+            delete newStatuses[SHOGI_ROOMS[index].id];
+          }
+          return newStatuses;
+        });
+      })
+    );
 
     return () => {
-      listeners.forEach(unsubscribe => unsubscribe());
+      unsubscribes.forEach(unsubscribe => unsubscribe());
     };
   }, []);
 
@@ -234,7 +241,7 @@ function RoomList() {
                   <span className="text-gray-600 mr-4">
                     {isPlaying ? '対局中' : `${playerCount}/2 プレイヤー`}
                   </span>
-                  {!isPlaying && (
+                  {(!status || status.status === 'waiting') && (
                     <button
                       onClick={() => handleJoinRoom(room.id)}
                       className="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded transition-colors duration-300 font-japanese"
