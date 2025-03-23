@@ -198,23 +198,20 @@ export const useOnlineHasamiShogi = () => {
     }
   }, [room, board, currentPlayer, selectedCell, isMyTurn, handleGameEnd, isFirstPlayer]);
 
-  // サーバーの時間を基にローカルの時間を更新
-  useEffect(() => {
+  // 時間の更新ロジックを共通化
+  const updateLocalTimes = useCallback(() => {
     if (!room) return;
     
-    // 対局開始前の場合は初期時間をセット
     if (room.gameState.status === 'waiting' || !room.gameState.lastMoveTime) {
       setLocalFirstPlayerTime(INITIAL_TIME);
       setLocalSecondPlayerTime(INITIAL_TIME);
       return;
     }
 
-    // プレイ中の場合のみ時間を更新
     if (room.gameState.status === 'playing') {
       const currentTime = Date.now();
       const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
       
-      // 現在の手番のプレイヤーの時間のみ経過時間を引く
       const firstPlayerTime = room.gameState.currentTurn === '歩'
         ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
         : room.gameState.firstPlayerTime;
@@ -228,28 +225,16 @@ export const useOnlineHasamiShogi = () => {
   }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, room?.gameState.lastMoveTime, 
       room?.gameState.currentTurn, room?.gameState.status]);
 
-  // リアルタイムでの時間更新（より頻繁に更新）
+  useEffect(() => {
+    updateLocalTimes();
+  }, [updateLocalTimes]);
+
   useEffect(() => {
     if (!room || room.gameState.status !== 'playing') return;
 
-    const timer = setInterval(() => {
-      const currentTime = Date.now();
-      const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
-      
-      // サーバーの時間を基準に計算
-      const firstPlayerTime = room.gameState.currentTurn === '歩'
-        ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
-        : room.gameState.firstPlayerTime;
-      const secondPlayerTime = room.gameState.currentTurn === 'と'
-        ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
-        : room.gameState.secondPlayerTime;
-
-      setLocalFirstPlayerTime(firstPlayerTime);
-      setLocalSecondPlayerTime(secondPlayerTime);
-    }, 100); // より頻繁に更新（100ミリ秒ごと）
-
+    const timer = setInterval(updateLocalTimes, 100);
     return () => clearInterval(timer);
-  }, [room?.gameState.status, room?.gameState.currentTurn, room?.gameState.lastMoveTime, room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime]);
+  }, [room?.gameState.status, updateLocalTimes]);
 
   const getTimeDisplay = useCallback(() => {
     if (!room) return null;
