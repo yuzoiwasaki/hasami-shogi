@@ -303,19 +303,6 @@ export const useOnlineHasamiShogi = () => {
     }
   }, [room, localFirstPlayerTime, localSecondPlayerTime, handleGameEnd]);
 
-  const resetGame = async () => {
-    const initialBoard = createInitialBoard();
-    if (room) {
-      // Firebaseに初期状態を送信
-      await updateGameState(initialBoard, '歩', true);
-    }
-    setBoard(initialBoard);
-    setCurrentPlayer('歩');
-    setSelectedCell(null);
-    setWinner(null);
-    setError(null);
-  };
-
   const getPlayerRole = () => {
     if (isFirstPlayer === null || !room) return null;
     return isFirstPlayer ? '先手' : '後手';
@@ -356,7 +343,6 @@ export const useOnlineHasamiShogi = () => {
     winner,
     error,
     handleCellClick,
-    resetGame,
     getPlayerName,
     room,
     getPlayerRole,
