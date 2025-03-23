@@ -1,4 +1,4 @@
-import { Board, Player, GameError, GameErrorCode, GameErrorCodeType, GameErrorMessages } from '../types';
+import { Board, Player, GameError, GameErrorCodeType, GameErrorMessages } from '../types';
 
 export const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {

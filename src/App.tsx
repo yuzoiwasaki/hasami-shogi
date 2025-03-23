@@ -31,11 +31,6 @@ function GameContent({ onLeave }: { onLeave: () => void }) {
     resign,
   } = useOnlineHasamiShogi();
 
-  const handleLeaveRoom = async () => {
-    await leaveRoom();
-    onLeave();
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <RoomManager />
