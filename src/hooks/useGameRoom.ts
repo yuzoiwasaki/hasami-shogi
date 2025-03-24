@@ -1,14 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ref, set, onValue, get, update } from 'firebase/database';
+import { ref, set, onValue, get, update, onDisconnect } from 'firebase/database';
 import { db } from '../firebase/config';
 import type { GameRoom, Board, Player } from '../types';
 import { createInitialBoard, checkWinner } from '../utils/hasamiShogiLogic';
-
-const ROOM_ERRORS = {
-  ROOM_FULL: '対局室が満員です',
-} as const;
-
-export const INITIAL_TIME = 300; // 5分（秒）
+import { INITIAL_TIME, ROOM_ERRORS } from '../constants/rooms';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -17,6 +12,21 @@ export const useGameRoom = () => {
   const [room, setRoom] = useState<GameRoom | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [isFirstPlayer, setIsFirstPlayer] = useState<boolean | null>(null);
+
+  // 接続が切れた時に部屋を削除
+  useEffect(() => {
+    if (room?.id && playerId && room.gameState.status === 'waiting') {
+      const roomRef = ref(db, `rooms/${room.id}`);
+      const disconnectRef = onDisconnect(roomRef);
+      disconnectRef.set(null).catch(error => {
+        console.error('Error setting up disconnect cleanup:', error);
+      });
+
+      return () => {
+        disconnectRef.cancel();
+      };
+    }
+  }, [room?.id, playerId, room?.gameState.status]);
 
   const leaveRoom = useCallback(async () => {
     if (!room?.id || !playerId) return;

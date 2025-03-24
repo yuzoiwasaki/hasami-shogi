@@ -10,4 +10,10 @@ export const SHOGI_ROOMS = [
   { id: 'hozuki', name: '歩月の間' },
 ] as const;
 
-export type RoomId = typeof SHOGI_ROOMS[number]['id']; 
+export type RoomId = typeof SHOGI_ROOMS[number]['id'];
+
+export const INITIAL_TIME = 300; // 5分（秒）
+
+export const ROOM_ERRORS = {
+  ROOM_FULL: '対局室が満員です',
+} as const; 

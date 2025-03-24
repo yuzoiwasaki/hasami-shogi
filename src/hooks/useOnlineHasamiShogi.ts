@@ -9,7 +9,7 @@ import {
   createGameError,
 } from '../utils/hasamiShogiLogic';
 import { SHOGI_ROOMS } from '../constants/rooms';
-import { INITIAL_TIME } from '../hooks/useGameRoom';
+import { INITIAL_TIME } from '../constants/rooms';
 import { ref, update, set } from 'firebase/database';
 import { db } from '../firebase/config';
 
