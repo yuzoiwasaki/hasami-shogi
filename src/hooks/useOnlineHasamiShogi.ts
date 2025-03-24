@@ -137,6 +137,13 @@ export const useOnlineHasamiShogi = () => {
       const currentTurn = currentPlayer;
 
       if (selectedCell) {
+        // 同じ位置をクリックした場合は選択をキャンセル
+        if (selectedCell[0] === row && selectedCell[1] === col) {
+          setSelectedCell(null);
+          setError(null);
+          return;
+        }
+
         // 駒を移動
         const [fromRow, fromCol] = selectedCell;
         
