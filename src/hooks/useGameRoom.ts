@@ -5,10 +5,7 @@ import type { GameRoom, Board, Player } from '../types';
 import { createInitialBoard, checkWinner } from '../utils/hasamiShogiLogic';
 
 const ROOM_ERRORS = {
-  NOT_FOUND: '対局室が見つかりません',
   ROOM_FULL: '対局室が満員です',
-  INVALID_STATE: '対局の状態が不正です',
-  NOT_YOUR_TURN: 'あなたの手番ではありません',
 } as const;
 
 export const INITIAL_TIME = 300; // 5分（秒）
