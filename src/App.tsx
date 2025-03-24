@@ -7,11 +7,7 @@ import { SHOGI_ROOMS, RoomId } from './constants/rooms';
 import { useGameRoomContext } from './contexts/GameRoomContext';
 import { ref, onValue } from 'firebase/database';
 import { db } from './firebase/config';
-
-type RoomStatus = {
-  status: 'waiting' | 'playing';
-  players: number;
-};
+import type { RoomStatus } from './types';
 
 function GameContent() {
   const {

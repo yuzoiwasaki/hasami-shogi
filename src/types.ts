@@ -61,4 +61,9 @@ export type GameRoom = {
   firstPlayerId: string | null;
   secondPlayerId: string | null;
   gameState: GameState;
+};
+
+export type RoomStatus = {
+  status: 'waiting' | 'playing';
+  players: number;
 }; 
