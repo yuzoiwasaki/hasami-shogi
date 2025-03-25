@@ -1,14 +1,10 @@
-import { Cell } from './Cell';
 import { useOnlineHasamiShogi } from '../hooks/useOnlineHasamiShogi';
 import { RoomManager } from './RoomManager';
 
 export function GameContent() {
   const {
-    board,
-    selectedCell,
     currentPlayer,
     error,
-    handleCellClick,
     getPlayerName,
     room,
     getPlayerRole,
@@ -94,25 +90,6 @@ export function GameContent() {
               ⚠️ {error.message}
             </div>
           )}
-        </div>
-      )}
-
-      {room && room.gameState.status === 'playing' && (
-        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
-          <div className="grid grid-cols-9 gap-1">
-            {board.map((row, rowIndex) =>
-              row.map((cell, colIndex) => (
-                <Cell
-                  key={`${rowIndex}-${colIndex}`}
-                  piece={cell}
-                  onClick={() => handleCellClick(rowIndex, colIndex)}
-                  isSelected={
-                    selectedCell?.[0] === rowIndex && selectedCell?.[1] === colIndex
-                  }
-                />
-              ))
-            )}
-          </div>
         </div>
       )}
     </div>
