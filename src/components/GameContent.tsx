@@ -4,7 +4,6 @@ import { RoomManager } from './RoomManager';
 export function GameContent() {
   const {
     currentPlayer,
-    error,
     getPlayerName,
     room,
     getPlayerRole,
@@ -82,12 +81,6 @@ export function GameContent() {
               {isMyTurn
                 ? '🎯 あなたの番です'
                 : '⏳ 相手の番です'}
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 text-red-800 rounded-lg border border-red-200">
-              ⚠️ {error.message}
             </div>
           )}
         </div>
