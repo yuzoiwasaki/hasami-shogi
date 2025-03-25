@@ -1,11 +1,11 @@
 export type Room = {
-  id: string;
-  name: string;
-  icon: string;
-  initialTime?: number;
+  readonly id: string;
+  readonly name: string;
+  readonly icon: string;
+  readonly initialTime?: number;
 };
 
-export const SHOGI_ROOMS = [
+export const SHOGI_ROOMS: readonly Room[] = [
   { 
     id: 'special',
     name: '特別対局室',
