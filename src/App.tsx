@@ -53,7 +53,8 @@ function GameContent() {
       {room && (
         <div className="mb-6 bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center border-b pb-4 mb-6">
-            <div className="text-xl font-bold text-gray-700">
+            <div className="text-xl font-bold text-gray-700 flex items-center gap-3">
+              <span className="text-2xl">{SHOGI_ROOMS.find(r => r.id === room.id)?.icon}</span>
               対局室: {getRoomName()}
             </div>
             {room.gameState.status === 'playing' && (
