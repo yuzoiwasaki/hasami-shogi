@@ -1,5 +1,5 @@
 # はさみ将棋
-React + TypeScript + Tailwind CSS で作られたオンライン対戦ができるはさみ将棋アプリケーションです。
+オンライン対戦ができるはさみ将棋アプリケーションです。
 
 [https://hasami-shogi.dev](https://hasami-shogi.dev)
 
@@ -31,6 +31,21 @@ React + TypeScript + Tailwind CSS で作られたオンライン対戦ができ�
 - 相手に動かせる駒がない時
 - 相手の持ち時間が切れた時
 
+## 技術スタック
+
+- フロントエンド
+  - React 19
+  - TypeScript 5
+  - Vite
+  - Tailwind CSS
+
+- バックエンド
+  - Firebase
+    - Realtime Database
+
+- デプロイ
+  - Vercel
+
 ## 開発環境
 
 1. リポジトリのクローン
@@ -45,7 +60,7 @@ npm install
 ```
 
 3. 環境変数の設定
-- 開発用の Firebase をセットアップ後、 `.env` に以下の環境変数を設定してください：
+- `.env.example`をコピーして`.env`を作成し、Firebaseコンソールから取得した値を設定してください：
 ```
 VITE_FIREBASE_API_KEY=your-api-key
 VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
