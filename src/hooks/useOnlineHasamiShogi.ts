@@ -200,6 +200,8 @@ export const useOnlineHasamiShogi = () => {
         if (newBoard[row][col] === currentTurn) {
           setSelectedCell([row, col]);
           setError(null);
+        } else if (newBoard[row][col] !== null) {
+          setError(createGameError(GameErrorCode.WRONG_PIECE));
         }
       }
     } catch (error) {
