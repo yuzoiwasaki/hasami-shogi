@@ -1,5 +1,5 @@
 # はさみ将棋
-React + TypeScript + Tailwind CSS で作られたはさみ将棋アプリケーションです。
+React + TypeScript + Tailwind CSS で作られたオンライン対戦ができるはさみ将棋アプリケーションです。
 
 [https://hasami-shogi.dev](https://hasami-shogi.dev)
 
@@ -30,3 +30,32 @@ React + TypeScript + Tailwind CSS で作られたはさみ将棋アプリケー�
 - 相手の駒を全て取った時
 - 相手に動かせる駒がない時
 - 相手の持ち時間が切れた時
+
+## 開発環境
+
+1. リポジトリのクローン
+```bash
+git clone https://github.com/yuzoiwasaki/hasami-shogi
+cd hasami-shogi
+```
+
+2. 依存関係のインストール
+```bash
+npm install
+```
+
+3. 環境変数の設定
+- 開発用の Firebase をセットアップ後、 `.env` に以下の環境変数を設定してください：
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-auth-domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
+```
+
+4. 開発サーバの起動
+```bash
+npm run dev
+```
