@@ -133,7 +133,12 @@ export const useOnlineHasamiShogi = () => {
   }, [leaveRoom]);
 
   const handleCellClick = useCallback(async (row: number, col: number) => {
-    if (!room || !isMyTurn || isFirstPlayer === null) return;
+    if (!room || isFirstPlayer === null) return;
+    
+    if (!isMyTurn) {
+      setError(createGameError(GameErrorCode.NOT_YOUR_TURN));
+      return;
+    }
 
     try {
       const newBoard = [...board];
