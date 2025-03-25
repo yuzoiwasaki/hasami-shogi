@@ -8,8 +8,7 @@ import {
   checkWinner,
   createGameError,
 } from '../utils/hasamiShogiLogic';
-import { SHOGI_ROOMS } from '../constants/rooms';
-import { INITIAL_TIME } from '../constants/rooms';
+import { SHOGI_ROOMS, DEFAULT_TIME } from '../constants/rooms';
 import { ref, update, set } from 'firebase/database';
 import { db } from '../firebase/config';
 
@@ -66,8 +65,8 @@ export const useOnlineHasamiShogi = () => {
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [error, setError] = useState<{ message: string } | null>(null);
   const [winner, setWinner] = useState<Player | null>(null);
-  const [localFirstPlayerTime, setLocalFirstPlayerTime] = useState<number>(INITIAL_TIME);
-  const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(INITIAL_TIME);
+  const [localFirstPlayerTime, setLocalFirstPlayerTime] = useState<number>(DEFAULT_TIME);
+  const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(DEFAULT_TIME);
 
   // roomの状態が変更されたら同期
   useEffect(() => {
@@ -89,11 +88,15 @@ export const useOnlineHasamiShogi = () => {
           room.gameState.firstPlayerId && 
           room.gameState.secondPlayerId && 
           !room.gameState.lastMoveTime) {
+        // 部屋の設定から初期時間を取得
+        const roomConfig = SHOGI_ROOMS.find((r) => r.id === room.id);
+        const initialTime = roomConfig?.initialTime ?? DEFAULT_TIME;
+        
         // lastMoveTimeを設定してゲーム開始
         update(ref(db, `rooms/${room.id}/gameState`), {
           lastMoveTime: Date.now(),
-          firstPlayerTime: INITIAL_TIME,
-          secondPlayerTime: INITIAL_TIME,
+          firstPlayerTime: initialTime,
+          secondPlayerTime: initialTime,
         });
         return;
       }
@@ -210,8 +213,8 @@ export const useOnlineHasamiShogi = () => {
     if (!room) return;
     
     if (room.gameState.status === 'waiting' || !room.gameState.lastMoveTime) {
-      setLocalFirstPlayerTime(INITIAL_TIME);
-      setLocalSecondPlayerTime(INITIAL_TIME);
+      setLocalFirstPlayerTime(DEFAULT_TIME);
+      setLocalSecondPlayerTime(DEFAULT_TIME);
       return;
     }
 

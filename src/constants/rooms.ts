@@ -1,8 +1,16 @@
+export type Room = {
+  id: string;
+  name: string;
+  icon: string;
+  initialTime?: number;
+};
+
 export const SHOGI_ROOMS = [
   { 
     id: 'special',
     name: '特別対局室',
-    icon: '👑'
+    icon: '👑',
+    initialTime: 600 // 10分
   },
   { 
     id: 'takao',
@@ -48,7 +56,8 @@ export const SHOGI_ROOMS = [
 
 export type RoomId = typeof SHOGI_ROOMS[number]['id'];
 
-export const INITIAL_TIME = 300; // 5分（秒）
+// デフォルトの持ち時間（5分）
+export const DEFAULT_TIME = 300;
 
 export const ROOM_ERRORS = {
   ROOM_FULL: '対局室が満員です',

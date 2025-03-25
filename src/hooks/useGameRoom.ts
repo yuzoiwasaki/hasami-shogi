@@ -3,7 +3,7 @@ import { ref, set, onValue, get, update, onDisconnect } from 'firebase/database'
 import { db } from '../firebase/config';
 import type { GameRoom, Board, Player } from '../types';
 import { createInitialBoard, checkWinner } from '../utils/hasamiShogiLogic';
-import { INITIAL_TIME, ROOM_ERRORS } from '../constants/rooms';
+import { DEFAULT_TIME, ROOM_ERRORS, SHOGI_ROOMS } from '../constants/rooms';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -61,6 +61,9 @@ export const useGameRoom = () => {
 
     if (!roomData) {
       // 対局室が存在しない場合は新規作成（先手として入室）
+      const room = SHOGI_ROOMS.find(r => r.id === roomIdToEnter);
+      const initialTime = room?.initialTime || DEFAULT_TIME;
+      
       const newRoom: GameRoom = {
         id: roomIdToEnter,
         firstPlayerId: newPlayerId,
@@ -70,8 +73,8 @@ export const useGameRoom = () => {
           currentTurn: '歩',
           status: 'waiting',  // 対局開始前
           isFirstPlayerTurn: true,
-          firstPlayerTime: INITIAL_TIME,
-          secondPlayerTime: INITIAL_TIME,
+          firstPlayerTime: initialTime,
+          secondPlayerTime: initialTime,
           lastMoveTime: Date.now(),
           firstPlayerId: newPlayerId,
           secondPlayerId: null,
@@ -89,6 +92,9 @@ export const useGameRoom = () => {
     }
 
     // 対局室が存在し、後手プレイヤーとして参加
+    const room = SHOGI_ROOMS.find(r => r.id === roomIdToEnter);
+    const initialTime = room?.initialTime || DEFAULT_TIME;
+
     const updatedRoom: GameRoom = {
       ...roomData,
       secondPlayerId: newPlayerId,
@@ -96,8 +102,8 @@ export const useGameRoom = () => {
         ...roomData.gameState,
         status: 'playing',
         lastMoveTime: Date.now(),
-        firstPlayerTime: INITIAL_TIME,
-        secondPlayerTime: INITIAL_TIME
+        firstPlayerTime: initialTime,
+        secondPlayerTime: initialTime
       }
     };
 
