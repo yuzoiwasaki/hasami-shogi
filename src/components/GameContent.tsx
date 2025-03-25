@@ -16,7 +16,6 @@ export function GameContent() {
     leaveRoom,
     isMyTurn,
     getTimeDisplay,
-    resign,
   } = useOnlineHasamiShogi();
 
   return (
@@ -36,36 +35,6 @@ export function GameContent() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-          </button>
-        )}
-        {room && room.gameState.status === 'playing' && (
-          <button
-            onClick={() => {
-              if (window.confirm('投了しますか？')) {
-                resign();
-              }
-            }}
-            disabled={!isMyTurn}
-            className={`px-4 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center gap-2 ${
-              isMyTurn
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-            title={isMyTurn ? '投了する' : '相手の手番です'}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-            投了
           </button>
         )}
       </div>
