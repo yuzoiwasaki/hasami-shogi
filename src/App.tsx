@@ -140,8 +140,9 @@ function GameContent() {
           )}
 
           {error && (
-            <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 text-lg">
-              ⚠️ {error.message}
+            <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-lg border border-red-200 text-lg text-center flex items-center justify-center gap-2">
+              <span className="animate-bounce">⚠️</span>
+              <span>{error.message}</span>
             </div>
           )}
         </div>
