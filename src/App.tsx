@@ -251,10 +251,17 @@ function RoomList() {
             return (
               <div
                 key={room.id}
-                className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+                className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
               >
-                <h2 className="text-xl font-semibold mb-2 text-gray-800 font-japanese">{room.name}</h2>
-                <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">
+                    {room.icon}
+                  </span>
+                  <h2 className="text-xl font-semibold text-gray-800 font-japanese">
+                    {room.name}
+                  </h2>
+                </div>
+                <div className="flex justify-between items-center border-t pt-4 mt-4">
                   <span className="text-gray-600 mr-4">
                     {isPlaying ? '対局中' : `${playerCount}/2 プレイヤー`}
                   </span>
