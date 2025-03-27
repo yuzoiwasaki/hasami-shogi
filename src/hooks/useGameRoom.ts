@@ -116,7 +116,7 @@ export const useGameRoom = () => {
 
     try {
       // 勝者判定
-      const winner = checkWinner(board, currentTurn);
+      const winner = checkWinner(board);
 
       if (winner) {
         // 勝利状態を更新
