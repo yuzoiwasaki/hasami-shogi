@@ -70,31 +70,15 @@ export const canMove = (
   return false;
 };
 
-export const hasValidMove = (
-  board: Board,
-  currentPlayer: Player,
-): boolean => {
-  for (let i = 0; i < 9; i++) {
-    for (let j = 0; j < 9; j++) {
-      if (board[i][j] === currentPlayer && canMove(board, i, j)) {
-        return true;
-      }
-    }
-  }
-  return false;
-};
-
-export const checkWinner = (
-  board: Board,
-  currentPlayer: Player,
-): Player | null => {
+export const checkWinner = (board: Board, currentTurn: Player): Player | null => {
   const { fuPieces, toPieces } = countPieces(board);
 
-  if (fuPieces === 0) return 'と';
-  if (toPieces === 0) return '歩';
-  
-  if (!hasValidMove(board, currentPlayer)) {
-    return currentPlayer === '歩' ? 'と' : '歩';
+  // 相手の駒が1枚以下になった時点で勝利
+  if (toPieces <= 1) {
+    return '歩';
+  }
+  if (fuPieces <= 1) {
+    return 'と';
   }
 
   return null;
