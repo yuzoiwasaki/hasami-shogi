@@ -37,7 +37,7 @@ export const GameRoomProvider = ({ children }: { children: ReactNode }) => {
 
       // 勝者判定
       if (newState.status === 'playing') {
-        const winner = checkWinner(board, currentTurn);
+        const winner = checkWinner(board);
         if (winner) {
           newState.status = 'finished';
           newState.winner = winner;
