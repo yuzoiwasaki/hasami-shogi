@@ -70,7 +70,7 @@ export const canMove = (
   return false;
 };
 
-export const checkWinner = (board: Board, currentTurn: Player): Player | null => {
+export const checkWinner = (board: Board): Player | null => {
   const { fuPieces, toPieces } = countPieces(board);
 
   // 相手の駒が1枚以下になった時点で勝利
