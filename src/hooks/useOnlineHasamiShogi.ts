@@ -172,7 +172,7 @@ export const useOnlineHasamiShogi = () => {
         });
 
         // 勝者判定
-        const winner = checkWinner(newBoard, currentTurn);
+        const winner = checkWinner(newBoard);
 
         // 経過時間を計算して現在の手番のプレイヤーの時間を更新
         const currentTime = Date.now();
@@ -272,7 +272,7 @@ export const useOnlineHasamiShogi = () => {
     if (!room || room.gameState.status === 'waiting' || winner) return;
 
     // 通常の勝利判定
-    const currentWinner = checkWinner(board, currentPlayer);
+    const currentWinner = checkWinner(board);
     if (currentWinner) {
       handleGameEnd(currentWinner);
     }
@@ -281,7 +281,7 @@ export const useOnlineHasamiShogi = () => {
     if (room.gameState.status === 'finished' && room.gameState.winner) {
       handleGameEnd(room.gameState.winner);
     }
-  }, [board, currentPlayer, handleGameEnd, room?.gameState.status, room?.gameState.winner, winner]);
+  }, [board, handleGameEnd, room?.gameState.status, room?.gameState.winner, winner]);
 
   // 時間切れの判定
   useEffect(() => {
