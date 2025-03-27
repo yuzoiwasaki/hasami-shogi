@@ -19,7 +19,6 @@ export enum GameErrorCode {
   WRONG_PIECE = 'WRONG_PIECE',
   INVALID_MOVE = 'INVALID_MOVE',
   TIME_UP = 'TIME_UP',
-  GAME_ENDED = 'GAME_ENDED',
 }
 
 // エラーメッセージの定義
@@ -28,7 +27,6 @@ export const GameErrorMessages: Record<GameErrorCode, string> = {
   [GameErrorCode.WRONG_PIECE]: '自分の駒を選択してください',
   [GameErrorCode.INVALID_MOVE]: 'そこには移動できません',
   [GameErrorCode.TIME_UP]: '時間切れです',
-  [GameErrorCode.GAME_ENDED]: '対局は終了しました',
 };
 
 export type GameErrorCodeType = GameErrorCode;
