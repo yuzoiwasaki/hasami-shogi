@@ -1,5 +1,8 @@
 import { Board, Player, GameError, GameErrorCodeType, GameErrorMessages } from '../types';
 
+const BOARD_SIZE = 9;
+const maxIndex = BOARD_SIZE - 1;
+
 export const createInitialBoard = (): Board => {
   return Array(9).fill(null).map((_, row) => {
     if (row === 0) return Array(9).fill('と');
@@ -96,7 +99,6 @@ const checkCapturesInDirection = (
   const capturedPositions: [number, number][] = [];
   const isPositive = isHorizontal ? col <= 6 : row <= 6;
   const isNegative = isHorizontal ? col >= 2 : row >= 2;
-  const maxIndex = isHorizontal ? 9 : 9;
 
   // 正方向のチェック
   if (isPositive) {
