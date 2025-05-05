@@ -239,12 +239,15 @@ function RoomList() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 text-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8 text-gray-800 font-japanese border-b-2 border-gray-800 pb-4">
-          はさみ将棋オンライン
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-800 mb-4">
+            はさみ将棋オンライン
+          </h1>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {SHOGI_ROOMS.map((room) => {
             const status = roomStatuses[room.id];
             const playerCount = status?.players || 0;
@@ -252,26 +255,35 @@ function RoomList() {
             return (
               <div
                 key={room.id}
-                className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 transform hover:-translate-y-1"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="text-3xl bg-amber-100 p-3 rounded-full">
                     {room.icon}
                   </span>
-                  <h2 className="text-xl font-semibold text-gray-800 font-japanese">
+                  <h2 className="text-2xl font-bold text-gray-800">
                     {room.name}
                   </h2>
                 </div>
-                <div className="flex justify-between items-center border-t pt-4 mt-4">
-                  <span className="text-gray-600 mr-4">
-                    {isPlaying ? '対局中' : `${playerCount}/2 プレイヤー`}
-                  </span>
+                <div className="flex justify-between items-center border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      isPlaying 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {isPlaying ? '対局中' : '待機中'}
+                    </span>
+                    <span className="text-gray-600">
+                      {playerCount}/2 プレイヤー
+                    </span>
+                  </div>
                   {(!status || status.status === 'waiting') && (
                     <button
                       onClick={() => handleJoinRoom(room.id)}
-                      className="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded transition-colors duration-300 font-japanese"
+                      className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-6 py-2.5 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
                     >
-                      入室
+                      入室する
                     </button>
                   )}
                 </div>
