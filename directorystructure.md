@@ -28,8 +28,6 @@
 │   ├── index.css          # グローバルスタイル
 │   └── vite-env.d.ts      # Vite型定義
 ├── public/                # 静的ファイル
-├── node_modules/          # 依存パッケージ
-├── .git/                  # Gitリポジトリ
 ├── .cursor/              # Cursor設定
 ├── package.json          # プロジェクト設定
 ├── package-lock.json     # 依存関係ロックファイル
