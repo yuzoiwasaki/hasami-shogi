@@ -7,7 +7,7 @@
 - Tailwind CSS: ^3.4.17
 
 ## バックエンド
-- Firebase
+- Firebase: ^11.4.0
 - Realtime Database
 
 ## デプロイ
