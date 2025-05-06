@@ -8,7 +8,7 @@
 
 ## バックエンド
 - Firebase: ^11.4.0
-- Realtime Database
+  - Realtime Database
 
 ## デプロイ
 - Vercel
