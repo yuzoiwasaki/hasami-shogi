@@ -62,4 +62,13 @@ export type GameRoom = {
 export type RoomStatus = {
   status: 'waiting' | 'playing';
   players: number;
+};
+
+export type Room = GameRoom;
+
+export type PlayerRole = '先手' | '後手';
+
+export type TimeDisplay = {
+  firstPlayer: string;
+  secondPlayer: string;
 }; 
