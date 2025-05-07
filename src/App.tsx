@@ -27,26 +27,6 @@ function GameContent() {
     getTimeDisplay,
     resign,
   } = useOnlineHasamiShogi();
-  const [countdown, setCountdown] = useState(10);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (winner) {
-      timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            window.location.reload();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [winner]);
 
   if (!room) return null;
 
@@ -87,7 +67,6 @@ function GameContent() {
         <WinnerModal
           winner={winner}
           getPlayerName={getPlayerName}
-          countdown={countdown}
         />
       )}
     </div>
