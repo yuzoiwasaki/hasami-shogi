@@ -7,7 +7,11 @@
 ├── src/
 │   ├── components/          # アプリケーションコンポーネント
 │   │   ├── Cell.tsx        # 盤面のセルコンポーネント
-│   │   └── RoomManager.tsx # ルーム管理コンポーネント
+│   │   ├── GameBoard.tsx   # 将棋盤の表示と操作を担当
+│   │   ├── GameHeader.tsx   # ゲームのヘッダー部分（部屋名、プレイヤー情報など）を表示
+│   │   ├── GameStatus.tsx   # ゲームの状態（手番、時間など）を表示
+│   │   ├── RoomManager.tsx   # ルーム管理コンポーネント
+│   │   └── WinnerModal.tsx   # 勝者表示のモーダル
 │   ├── contexts/           # Reactコンテキスト
 │   │   └── GameRoomContext.tsx
 │   ├── hooks/              # カスタムフック
