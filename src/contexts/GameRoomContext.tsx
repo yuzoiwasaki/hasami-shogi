@@ -1,14 +1,11 @@
-import { createContext, useContext, ReactNode, useCallback } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useGameRoom } from '../hooks/useGameRoom';
 import type { GameRoom, Board, Player } from '../types';
-import { ref, get, update } from 'firebase/database';
-import { db } from '../firebase/config';
 
 type GameRoomContextType = {
   room: GameRoom | null;
   isFirstPlayer: boolean | null;
   enterRoom: (roomId: string) => Promise<void>;
-  updateGameState: (board: Board, currentTurn: Player, isFirstPlayerTurn: boolean) => Promise<void>;
   leaveRoom: () => Promise<void>;
 };
 
@@ -17,32 +14,8 @@ const GameRoomContext = createContext<GameRoomContextType | null>(null);
 export const GameRoomProvider = ({ children }: { children: ReactNode }) => {
   const gameRoom = useGameRoom();
 
-  const updateGameState = useCallback(async (
-    board: Board,
-    currentTurn: Player,
-    isFirstPlayerTurn: boolean
-  ) => {
-    if (!gameRoom.room) return;
-
-    try {
-      const roomRef = ref(db, `rooms/${gameRoom.room.id}`);
-      const snapshot = await get(roomRef);
-      if (!snapshot.exists()) {
-        throw new Error('Room not found');
-      }
-
-      const currentState = snapshot.val().gameState;
-      const newState = { ...currentState, board, currentTurn, isFirstPlayerTurn };
-
-      await update(roomRef, { gameState: newState });
-    } catch (error) {
-      console.error('Error updating game state:', error);
-      throw error;
-    }
-  }, [gameRoom.room]);
-
   return (
-    <GameRoomContext.Provider value={{ ...gameRoom, updateGameState }}>
+    <GameRoomContext.Provider value={gameRoom}>
       {children}
     </GameRoomContext.Provider>
   );

@@ -16,7 +16,6 @@ export const useOnlineHasamiShogi = () => {
   const {
     room,
     isFirstPlayer,
-    updateGameState,
     leaveRoom,
   } = useGameRoomContext();
 
@@ -75,7 +74,13 @@ export const useOnlineHasamiShogi = () => {
       // 入室直後の場合は盤面をリセット
       if (room.gameState.status === 'waiting') {
         const initialBoard = createInitialBoard();
-        updateGameState(initialBoard, '歩', true);
+        // 直接Firebaseを更新
+        update(ref(db, `rooms/${room.id}/gameState`), {
+          board: initialBoard,
+          currentTurn: '歩',
+          status: 'waiting',
+          isFirstPlayerTurn: true,
+        });
         setBoard(initialBoard);
         setCurrentPlayer('歩');
         setSelectedCell(null);

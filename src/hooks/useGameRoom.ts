@@ -111,23 +111,6 @@ export const useGameRoom = () => {
     updateRoomState(updatedRoom, newPlayerId);
   };
 
-  const updateGameState = useCallback(async (board: Board, currentTurn: Player, isFirstPlayerTurn: boolean) => {
-    if (!room) return;
-
-    try {
-      // 通常の手の更新
-      await update(ref(db, `rooms/${room.id}/gameState`), {
-        board,
-        currentTurn,
-        status: 'playing',
-        isFirstPlayerTurn
-      });
-    } catch (error) {
-      console.error('Error updating game state:', error);
-      throw error;
-    }
-  }, [room]);
-
   const updateRoomState = (newRoom: GameRoom, newPlayerId: string) => {
     setRoom(newRoom);
     setPlayerId(newPlayerId);
@@ -162,6 +145,5 @@ export const useGameRoom = () => {
     isFirstPlayer,
     enterRoom,
     leaveRoom,
-    updateGameState,
   };
 }; 
