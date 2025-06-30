@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { Player, PlayerRole } from '../types';
 
 interface WinnerModalProps {
