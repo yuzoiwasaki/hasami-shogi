@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useGameRoom } from '../hooks/useGameRoom';
-import type { GameRoom, Board, Player } from '../types';
+import type { GameRoom } from '../types';
 
 type GameRoomContextType = {
   room: GameRoom | null;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ref, set, onValue, get, update, onDisconnect } from 'firebase/database';
+import { ref, set, onValue, get, onDisconnect } from 'firebase/database';
 import { db } from '../firebase/config';
-import type { GameRoom, Board, Player } from '../types';
+import type { GameRoom } from '../types';
 import { createInitialBoard } from '../utils/hasamiShogiLogic';
 import { DEFAULT_TIME, ROOM_ERRORS, SHOGI_ROOMS } from '../constants/rooms';
 
