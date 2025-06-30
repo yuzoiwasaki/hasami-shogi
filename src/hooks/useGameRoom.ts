@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ref, set, onValue, get, onDisconnect } from 'firebase/database';
+import { ref, set, onValue, get, onDisconnect, update } from 'firebase/database';
 import { db } from '../firebase/config';
 import type { GameRoom } from '../types';
 import { createInitialBoard } from '../utils/hasamiShogiLogic';
@@ -13,7 +13,6 @@ export const useGameRoom = () => {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [isFirstPlayer, setIsFirstPlayer] = useState<boolean | null>(null);
 
-  // 共通処理の関数化
   const getRoomConfig = useCallback((roomId: string) => {
     const room = SHOGI_ROOMS.find(r => r.id === roomId);
     return {
@@ -31,18 +30,31 @@ export const useGameRoom = () => {
 
   // 接続が切れた時に部屋を削除
   useEffect(() => {
-    if (room?.id && playerId && room.gameState.status === 'waiting') {
+    if (room?.id && playerId) {
       const roomRef = ref(db, `rooms/${room.id}`);
       const disconnectRef = onDisconnect(roomRef);
-      disconnectRef.set(null).catch(error => {
-        console.error('Error setting up disconnect cleanup:', error);
-      });
-
+      
+      if (room.gameState.status === 'waiting') {
+        // 待機中は部屋全体を削除
+        disconnectRef.set(null).catch(error => {
+          console.error('Error setting up disconnect cleanup:', error);
+        });
+      } else if (room.gameState.status === 'playing') {
+        // 対局中は自分のプレイヤーIDを削除し、相手の勝利とする
+        disconnectRef.update({
+          [isFirstPlayer ? 'firstPlayerId' : 'secondPlayerId']: null,
+          'gameState/status': 'finished',
+          'gameState/winner': isFirstPlayer ? 'と' : '歩'
+        }).catch(error => {
+          console.error('Error setting up disconnect cleanup:', error);
+        });
+      }
+      
       return () => {
         disconnectRef.cancel();
       };
     }
-  }, [room?.id, playerId, room?.gameState.status]);
+  }, [room?.id, playerId, room?.gameState.status, isFirstPlayer]);
 
   const leaveRoom = useCallback(async () => {
     if (!room?.id || !playerId) return;
@@ -54,18 +66,25 @@ export const useGameRoom = () => {
 
       if (!currentRoom) return;
 
-      // 対局開始前または対局終了時は対局室を削除
       if (currentRoom.gameState.status === 'waiting' || currentRoom.gameState.status === 'finished') {
+        // 待機中または終了時は部屋を削除
         await set(roomRef, null);
-        resetRoomState();
-        return;
+      } else if (currentRoom.gameState.status === 'playing') {
+        // 対局中は自分のプレイヤーIDを削除し、相手の勝利とする
+        await update(roomRef, {
+          [isFirstPlayer ? 'firstPlayerId' : 'secondPlayerId']: null,
+          'gameState/status': 'finished',
+          'gameState/winner': isFirstPlayer ? 'と' : '歩'
+        });
       }
+      
+      resetRoomState();
     } catch (error) {
       console.error('Error leaving room:', error);
       // エラー時も状態をリセット
       resetRoomState();
     }
-  }, [room?.id, playerId, resetRoomState]);
+  }, [room?.id, playerId, isFirstPlayer, resetRoomState]);
 
   const enterRoom = async (roomIdToEnter: string) => {
     const roomRef = ref(db, `rooms/${roomIdToEnter}`);
