@@ -67,6 +67,7 @@ export const useOnlineHasamiShogi = () => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [localFirstPlayerTime, setLocalFirstPlayerTime] = useState<number>(DEFAULT_TIME);
   const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(DEFAULT_TIME);
+  const [countdown, setCountdown] = useState<number>(10);
 
   // roomの状態が変更されたら同期
   useEffect(() => {
@@ -119,17 +120,25 @@ export const useOnlineHasamiShogi = () => {
   const handleGameEnd = useCallback((winner: '歩' | 'と') => {
     setWinner(winner);
     setError(null);
+    setCountdown(10);
 
-    // 10秒後に自動退出
-    const timer = setTimeout(() => {
-      setWinner(null);
-      leaveRoom();
-      // トップページに戻るために、window.locationを更新
-      window.location.reload();
-    }, 10000);
+    // 10秒間のカウントダウン
+    const countdownTimer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownTimer);
+          setWinner(null);
+          leaveRoom();
+          // トップページに戻るために、window.locationを更新
+          window.location.reload();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
     // クリーンアップ関数を返す
-    return () => clearTimeout(timer);
+    return () => clearInterval(countdownTimer);
   }, [leaveRoom]);
 
   const handleCellClick = useCallback(async (row: number, col: number) => {
@@ -355,5 +364,6 @@ export const useOnlineHasamiShogi = () => {
     getTimeDisplay,
     resign,
     handleGameEnd,
+    countdown,
   };
 }; 

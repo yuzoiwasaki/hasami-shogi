@@ -4,32 +4,14 @@ import type { Player, PlayerRole } from '../types';
 interface WinnerModalProps {
   winner: Player;
   getPlayerName: (player: Player) => PlayerRole;
+  countdown: number;
 }
 
 export function WinnerModal({
   winner,
   getPlayerName,
+  countdown,
 }: WinnerModalProps) {
-  const [localCountdown, setLocalCountdown] = useState(10);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    timer = setInterval(() => {
-      setLocalCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          window.location.reload();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [winner]);
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-2xl p-12 transform scale-100 animate-bounce-once max-w-lg w-full mx-4">
@@ -39,7 +21,7 @@ export function WinnerModal({
             {getPlayerName(winner)}の勝利！
           </div>
           <div className="text-gray-600 text-lg animate-pulse">
-            {localCountdown}秒後に自動的に退出します...
+            {countdown}秒後に自動的に退出します...
           </div>
         </div>
       </div>

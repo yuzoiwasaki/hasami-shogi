@@ -26,6 +26,7 @@ function GameContent() {
     isMyTurn,
     getTimeDisplay,
     resign,
+    countdown,
   } = useOnlineHasamiShogi();
 
   if (!room) return null;
@@ -67,6 +68,7 @@ function GameContent() {
         <WinnerModal
           winner={winner}
           getPlayerName={getPlayerName}
+          countdown={countdown}
         />
       )}
     </div>
