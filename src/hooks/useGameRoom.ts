@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ref, set, onValue, get, update, onDisconnect } from 'firebase/database';
 import { db } from '../firebase/config';
 import type { GameRoom, Board, Player } from '../types';
-import { createInitialBoard, checkWinner } from '../utils/hasamiShogiLogic';
+import { createInitialBoard } from '../utils/hasamiShogiLogic';
 import { DEFAULT_TIME, ROOM_ERRORS, SHOGI_ROOMS } from '../constants/rooms';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -115,31 +115,13 @@ export const useGameRoom = () => {
     if (!room) return;
 
     try {
-      // 勝者判定
-      const winner = checkWinner(board);
-
-      if (winner) {
-        // 勝利状態を更新
-        await update(ref(db, `rooms/${room.id}/gameState`), {
-          board,
-          currentTurn,
-          status: 'finished',
-          winner
-        });
-        // 10秒後に対局室を削除
-        setTimeout(async () => {
-          const roomRef = ref(db, `rooms/${room.id}`);
-          await set(roomRef, null);
-        }, 10000);
-      } else {
-        // 通常の手
-        await update(ref(db, `rooms/${room.id}/gameState`), {
-          board,
-          currentTurn,
-          status: 'playing',
-          isFirstPlayerTurn
-        });
-      }
+      // 通常の手の更新
+      await update(ref(db, `rooms/${room.id}/gameState`), {
+        board,
+        currentTurn,
+        status: 'playing',
+        isFirstPlayerTurn
+      });
     } catch (error) {
       console.error('Error updating game state:', error);
       throw error;

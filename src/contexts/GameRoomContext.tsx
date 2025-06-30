@@ -3,7 +3,6 @@ import { useGameRoom } from '../hooks/useGameRoom';
 import type { GameRoom, Board, Player } from '../types';
 import { ref, get, update } from 'firebase/database';
 import { db } from '../firebase/config';
-import { checkWinner } from '../utils/hasamiShogiLogic';
 
 type GameRoomContextType = {
   room: GameRoom | null;
@@ -34,15 +33,6 @@ export const GameRoomProvider = ({ children }: { children: ReactNode }) => {
 
       const currentState = snapshot.val().gameState;
       const newState = { ...currentState, board, currentTurn, isFirstPlayerTurn };
-
-      // 勝者判定
-      if (newState.status === 'playing') {
-        const winner = checkWinner(board);
-        if (winner) {
-          newState.status = 'finished';
-          newState.winner = winner;
-        }
-      }
 
       await update(roomRef, { gameState: newState });
     } catch (error) {

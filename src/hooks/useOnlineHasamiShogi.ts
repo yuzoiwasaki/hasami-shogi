@@ -280,17 +280,11 @@ export const useOnlineHasamiShogi = () => {
   useEffect(() => {
     if (!room || room.gameState.status === 'waiting' || winner) return;
 
-    // 通常の勝利判定
-    const currentWinner = checkWinner(board);
-    if (currentWinner) {
-      handleGameEnd(currentWinner);
-    }
-
     // Firebaseからの勝利状態の監視
     if (room.gameState.status === 'finished' && room.gameState.winner) {
       handleGameEnd(room.gameState.winner);
     }
-  }, [board, handleGameEnd, room?.gameState.status, room?.gameState.winner, winner]);
+  }, [handleGameEnd, room?.gameState.status, room?.gameState.winner, winner]);
 
   // 時間切れの判定
   useEffect(() => {
