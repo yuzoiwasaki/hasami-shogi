@@ -11,6 +11,42 @@ import { GameHeader } from './components/GameHeader';
 import { GameBoard } from './components/GameBoard';
 import { WinnerModal } from './components/WinnerModal';
 
+// 部屋監視用のカスタムフック
+function useRoomStatuses() {
+  const [roomStatuses, setRoomStatuses] = useState<Record<RoomId, RoomStatus>>({});
+
+  useEffect(() => {
+    const roomRefs = SHOGI_ROOMS.map(room => ref(db, `rooms/${room.id}`));
+    const unsubscribes = roomRefs.map((roomRef, index) => 
+      onValue(roomRef, (snapshot) => {
+        const roomData = snapshot.val();
+        setRoomStatuses(prev => {
+          const newStatuses = { ...prev };
+          if (roomData) {
+            let playerCount = 0;
+            if (roomData.firstPlayerId) playerCount++;
+            if (roomData.secondPlayerId) playerCount++;
+            
+            newStatuses[SHOGI_ROOMS[index].id] = {
+              status: roomData.gameState.status,
+              players: playerCount
+            };
+          } else {
+            delete newStatuses[SHOGI_ROOMS[index].id];
+          }
+          return newStatuses;
+        });
+      })
+    );
+
+    return () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe());
+    };
+  }, []);
+
+  return roomStatuses;
+}
+
 function GameContent() {
   const {
     board,
@@ -78,36 +114,7 @@ function GameContent() {
 function RoomList() {
   const [roomId, setRoomId] = useState<RoomId | null>(null);
   const { enterRoom } = useGameRoomContext();
-  const [roomStatuses, setRoomStatuses] = useState<Record<RoomId, RoomStatus>>({} as Record<RoomId, RoomStatus>);
-
-  useEffect(() => {
-    const roomRefs = SHOGI_ROOMS.map(room => ref(db, `rooms/${room.id}`));
-    const unsubscribes = roomRefs.map((roomRef, index) => 
-      onValue(roomRef, (snapshot) => {
-        const roomData = snapshot.val();
-        setRoomStatuses(prev => {
-          const newStatuses = { ...prev };
-          if (roomData) {
-            let playerCount = 0;
-            if (roomData.firstPlayerId) playerCount++;
-            if (roomData.secondPlayerId) playerCount++;
-            
-            newStatuses[SHOGI_ROOMS[index].id] = {
-              status: roomData.gameState.status,
-              players: playerCount
-            };
-          } else {
-            delete newStatuses[SHOGI_ROOMS[index].id];
-          }
-          return newStatuses;
-        });
-      })
-    );
-
-    return () => {
-      unsubscribes.forEach(unsubscribe => unsubscribe());
-    };
-  }, []);
+  const roomStatuses = useRoomStatuses();
 
   const handleJoinRoom = async (roomId: RoomId) => {
     try {
