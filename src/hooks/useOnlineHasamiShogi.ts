@@ -88,6 +88,12 @@ export const useOnlineHasamiShogi = () => {
     return { firstPlayerTime, secondPlayerTime };
   }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, calculateTimeElapsed]);
 
+  // Firebase更新ロジックを共通化
+  const updateGameState = useCallback(async (updates: Record<string, unknown>) => {
+    if (!room) return;
+    await update(ref(db, `rooms/${room.id}/gameState`), updates);
+  }, [room?.id]);
+
   // roomの状態が変更されたら同期
   useEffect(() => {
     if (room) {
@@ -213,7 +219,7 @@ export const useOnlineHasamiShogi = () => {
         const { firstPlayerTime: updatedFirstPlayerTime, secondPlayerTime: updatedSecondPlayerTime } = calculatePlayerTimes(currentTurn);
 
         // Firebaseのデータベースを直接更新
-        await update(ref(db, `rooms/${room.id}/gameState`), {
+        await updateGameState({
           board: newBoard,
           currentTurn: currentTurn === '歩' ? 'と' : '歩',
           firstPlayerTime: updatedFirstPlayerTime,
@@ -340,7 +346,7 @@ export const useOnlineHasamiShogi = () => {
     const winner: Player = isFirstPlayer ? 'と' : '歩';
     
     // 投了時の状態を更新（Firebaseのデータベースを直接更新）
-    await update(ref(db, `rooms/${room.id}/gameState`), {
+    await updateGameState({
       board,
       currentTurn: winner,
       status: 'finished',
