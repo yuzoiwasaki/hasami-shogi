@@ -68,6 +68,26 @@ export const useOnlineHasamiShogi = () => {
   const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(DEFAULT_TIME);
   const [countdown, setCountdown] = useState<number>(10);
 
+  // 時間計算ロジックを共通化
+  const calculateTimeElapsed = useCallback(() => {
+    if (!room?.gameState.lastMoveTime) return 0;
+    return Math.floor((Date.now() - room.gameState.lastMoveTime) / 1000);
+  }, [room?.gameState.lastMoveTime]);
+
+  const calculatePlayerTimes = useCallback((currentTurn: Player) => {
+    if (!room) return { firstPlayerTime: DEFAULT_TIME, secondPlayerTime: DEFAULT_TIME };
+    
+    const timeElapsed = calculateTimeElapsed();
+    const firstPlayerTime = currentTurn === '歩'
+      ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
+      : room.gameState.firstPlayerTime;
+    const secondPlayerTime = currentTurn === 'と'
+      ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
+      : room.gameState.secondPlayerTime;
+    
+    return { firstPlayerTime, secondPlayerTime };
+  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, calculateTimeElapsed]);
+
   // roomの状態が変更されたら同期
   useEffect(() => {
     if (room) {
@@ -190,13 +210,7 @@ export const useOnlineHasamiShogi = () => {
 
         // 経過時間を計算して現在の手番のプレイヤーの時間を更新
         const currentTime = Date.now();
-        const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
-        const updatedFirstPlayerTime = currentTurn === '歩' 
-          ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
-          : room.gameState.firstPlayerTime;
-        const updatedSecondPlayerTime = currentTurn === 'と'
-          ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
-          : room.gameState.secondPlayerTime;
+        const { firstPlayerTime: updatedFirstPlayerTime, secondPlayerTime: updatedSecondPlayerTime } = calculatePlayerTimes(currentTurn);
 
         // Firebaseのデータベースを直接更新
         await update(ref(db, `rooms/${room.id}/gameState`), {
@@ -240,21 +254,11 @@ export const useOnlineHasamiShogi = () => {
     }
 
     if (room.gameState.status === 'playing') {
-      const currentTime = Date.now();
-      const timeElapsed = Math.floor((currentTime - room.gameState.lastMoveTime) / 1000);
-      
-      const firstPlayerTime = room.gameState.currentTurn === '歩'
-        ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
-        : room.gameState.firstPlayerTime;
-      const secondPlayerTime = room.gameState.currentTurn === 'と'
-        ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
-        : room.gameState.secondPlayerTime;
-
+      const { firstPlayerTime, secondPlayerTime } = calculatePlayerTimes(room.gameState.currentTurn);
       setLocalFirstPlayerTime(firstPlayerTime);
       setLocalSecondPlayerTime(secondPlayerTime);
     }
-  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, room?.gameState.lastMoveTime, 
-      room?.gameState.currentTurn, room?.gameState.status]);
+  }, [room?.gameState.status, room?.gameState.lastMoveTime, room?.gameState.currentTurn, calculatePlayerTimes]);
 
   useEffect(() => {
     updateLocalTimes();
