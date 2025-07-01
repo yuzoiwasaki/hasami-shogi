@@ -8,7 +8,6 @@ import { useGameRoomContext } from './contexts/GameRoomContext';
 import { GameHeader } from './components/GameHeader';
 import { GameBoard } from './components/GameBoard';
 import { WinnerModal } from './components/WinnerModal';
-import type { RoomStatus } from './types';
 
 function GameContent() {
   const {
