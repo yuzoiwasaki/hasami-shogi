@@ -11,6 +11,7 @@ import {
 import { SHOGI_ROOMS, DEFAULT_TIME } from '../constants/rooms';
 import { ref, update, set } from 'firebase/database';
 import { db } from '../firebase/config';
+import { useGameTimer } from './useGameTimer';
 
 export const useOnlineHasamiShogi = () => {
   const {
@@ -64,29 +65,14 @@ export const useOnlineHasamiShogi = () => {
   const [currentPlayer, setCurrentPlayer] = useState<Player>('歩');
   const [error, setError] = useState<{ message: string } | null>(null);
   const [winner, setWinner] = useState<Player | null>(null);
-  const [localFirstPlayerTime, setLocalFirstPlayerTime] = useState<number>(DEFAULT_TIME);
-  const [localSecondPlayerTime, setLocalSecondPlayerTime] = useState<number>(DEFAULT_TIME);
   const [countdown, setCountdown] = useState<number>(10);
 
-  // 時間計算ロジックを共通化
-  const calculateTimeElapsed = useCallback(() => {
-    if (!room?.gameState.lastMoveTime) return 0;
-    return Math.floor((Date.now() - room.gameState.lastMoveTime) / 1000);
-  }, [room?.gameState.lastMoveTime]);
-
-  const calculatePlayerTimes = useCallback((currentTurn: Player) => {
-    if (!room) return { firstPlayerTime: DEFAULT_TIME, secondPlayerTime: DEFAULT_TIME };
-    
-    const timeElapsed = calculateTimeElapsed();
-    const firstPlayerTime = currentTurn === '歩'
-      ? Math.max(0, room.gameState.firstPlayerTime - timeElapsed)
-      : room.gameState.firstPlayerTime;
-    const secondPlayerTime = currentTurn === 'と'
-      ? Math.max(0, room.gameState.secondPlayerTime - timeElapsed)
-      : room.gameState.secondPlayerTime;
-    
-    return { firstPlayerTime, secondPlayerTime };
-  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, calculateTimeElapsed]);
+  // 時間管理フックを使用
+  const {
+    getTimeDisplay,
+    isTimeUp,
+    calculatePlayerTimes,
+  } = useGameTimer({ room });
 
   const updateGameState = useCallback(async (updates: Record<string, unknown>) => {
     if (!room) return;
@@ -252,47 +238,7 @@ export const useOnlineHasamiShogi = () => {
     }
   }, [room, board, currentPlayer, selectedCell, isMyTurn, handleGameEnd, isFirstPlayer]);
 
-  // 時間の更新ロジックを共通化
-  const updateLocalTimes = useCallback(() => {
-    if (!room) return;
-    
-    if (room.gameState.status === 'waiting' || !room.gameState.lastMoveTime) {
-      setLocalFirstPlayerTime(DEFAULT_TIME);
-      setLocalSecondPlayerTime(DEFAULT_TIME);
-      return;
-    }
 
-    if (room.gameState.status === 'playing') {
-      const { firstPlayerTime, secondPlayerTime } = calculatePlayerTimes(room.gameState.currentTurn);
-      setLocalFirstPlayerTime(firstPlayerTime);
-      setLocalSecondPlayerTime(secondPlayerTime);
-    }
-  }, [room?.gameState.status, room?.gameState.lastMoveTime, room?.gameState.currentTurn, calculatePlayerTimes]);
-
-  useEffect(() => {
-    updateLocalTimes();
-  }, [updateLocalTimes]);
-
-  useEffect(() => {
-    if (!room || room.gameState.status !== 'playing') return;
-
-    const timer = setInterval(updateLocalTimes, 100);
-    return () => clearInterval(timer);
-  }, [room?.gameState.status, updateLocalTimes]);
-
-  const getTimeDisplay = useCallback(() => {
-    if (!room) return null;
-    return {
-      firstPlayer: formatTime(localFirstPlayerTime),
-      secondPlayer: formatTime(localSecondPlayerTime),
-    };
-  }, [room, localFirstPlayerTime, localSecondPlayerTime]);
-
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
   // 勝利判定（入室直後はスキップ）
   useEffect(() => {
@@ -308,12 +254,7 @@ export const useOnlineHasamiShogi = () => {
   useEffect(() => {
     if (!room || room.gameState.status !== 'playing') return;
 
-    // 現在の手番のプレイヤーの時間が切れているかチェック
-    const currentPlayerTime = room.gameState.currentTurn === '歩'
-      ? localFirstPlayerTime
-      : localSecondPlayerTime;
-
-    if (currentPlayerTime <= 0) {
+    if (isTimeUp()) {
       const winner = room.gameState.currentTurn === '歩' ? 'と' : '歩';
       handleGameEnd(winner);
       setError(createGameError(GameErrorCode.TIME_UP));
@@ -324,7 +265,7 @@ export const useOnlineHasamiShogi = () => {
         await set(roomRef, null);
       }, 10000);
     }
-  }, [room, localFirstPlayerTime, localSecondPlayerTime, handleGameEnd]);
+  }, [room, isTimeUp, handleGameEnd]);
 
   const getPlayerRole = () => {
     if (isFirstPlayer === null || !room) return null;
