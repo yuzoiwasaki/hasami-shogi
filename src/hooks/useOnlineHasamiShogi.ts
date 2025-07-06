@@ -9,9 +9,10 @@ import {
   createGameError,
 } from '../utils/hasamiShogiLogic';
 import { SHOGI_ROOMS, DEFAULT_TIME } from '../constants/rooms';
-import { ref, update, set } from 'firebase/database';
+import { ref, update } from 'firebase/database';
 import { db } from '../firebase/config';
 import { useGameTimer } from './useGameTimer';
+import { useGameSync } from './useGameSync';
 
 export const useOnlineHasamiShogi = () => {
   const {
@@ -20,45 +21,7 @@ export const useOnlineHasamiShogi = () => {
     leaveRoom,
   } = useGameRoomContext();
 
-  // 盤面データを配列に変換する関数
-  const convertToBoard = (data: Board | null | undefined): Board => {
-    if (!data) return createInitialBoard();
 
-    // 空の9x9盤面を作成
-    const board = Array(9).fill(null).map(() => Array(9).fill(null));
-
-    try {
-      // データを処理
-      for (let i = 0; i < 9; i++) {
-        const rowData = data[i];
-        
-        // 行が配列の場合
-        if (Array.isArray(rowData)) {
-          for (let j = 0; j < 9; j++) {
-            board[i][j] = rowData[j] ?? null;
-          }
-          continue;
-        }
-        
-        // 行がオブジェクトの場合
-        if (rowData && typeof rowData === 'object') {
-          // まず行を全てnullで初期化
-          board[i] = Array(9).fill(null);
-          // 存在する値のみを設定
-          Object.entries(rowData).forEach(([j, value]) => {
-            if (value !== undefined && value !== null) {
-              board[i][Number(j)] = value;
-            }
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error converting board:', error);
-      return createInitialBoard();
-    }
-
-    return board;
-  };
 
   const [board, setBoard] = useState<Board>(createInitialBoard);
   const [selectedCell, setSelectedCell] = useState<Position | null>(null);
@@ -74,10 +37,12 @@ export const useOnlineHasamiShogi = () => {
     calculatePlayerTimes,
   } = useGameTimer({ room });
 
-  const updateGameState = useCallback(async (updates: Record<string, unknown>) => {
-    if (!room) return;
-    await update(ref(db, `rooms/${room.id}/gameState`), updates);
-  }, [room?.id]);
+  // Firebase同期フックを使用
+  const {
+    convertToBoard,
+    updateGameState,
+    deleteRoom,
+  } = useGameSync({ room });
 
   const resetGameState = useCallback(() => {
     setBoard(createInitialBoard());
@@ -261,8 +226,7 @@ export const useOnlineHasamiShogi = () => {
 
       // 時間切れの場合も部屋を削除
       setTimeout(async () => {
-        const roomRef = ref(db, `rooms/${room.id}`);
-        await set(roomRef, null);
+        await deleteRoom();
       }, 10000);
     }
   }, [room, isTimeUp, handleGameEnd]);

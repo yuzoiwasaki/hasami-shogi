@@ -13,7 +13,7 @@ export const useGameTimer = ({ room }: GameTimerProps) => {
   const calculateTimeElapsed = useCallback(() => {
     if (!room?.gameState.lastMoveTime) return 0;
     return Math.floor((Date.now() - room.gameState.lastMoveTime) / 1000);
-  }, [room?.gameState.lastMoveTime]);
+  }, [room]);
 
   const calculatePlayerTimes = useCallback((currentTurn: Player) => {
     if (!room) return { firstPlayerTime: DEFAULT_TIME, secondPlayerTime: DEFAULT_TIME };
@@ -27,7 +27,7 @@ export const useGameTimer = ({ room }: GameTimerProps) => {
       : room.gameState.secondPlayerTime;
     
     return { firstPlayerTime, secondPlayerTime };
-  }, [room?.gameState.firstPlayerTime, room?.gameState.secondPlayerTime, calculateTimeElapsed]);
+  }, [room, calculateTimeElapsed]);
 
   const updateLocalTimes = useCallback(() => {
     if (!room) return;
@@ -43,7 +43,7 @@ export const useGameTimer = ({ room }: GameTimerProps) => {
       setLocalFirstPlayerTime(firstPlayerTime);
       setLocalSecondPlayerTime(secondPlayerTime);
     }
-  }, [room?.gameState.status, room?.gameState.lastMoveTime, room?.gameState.currentTurn, calculatePlayerTimes]);
+  }, [room, calculatePlayerTimes]);
 
   useEffect(() => {
     updateLocalTimes();
@@ -54,7 +54,7 @@ export const useGameTimer = ({ room }: GameTimerProps) => {
 
     const timer = setInterval(updateLocalTimes, 100);
     return () => clearInterval(timer);
-  }, [room?.gameState.status, updateLocalTimes]);
+  }, [room, updateLocalTimes]);
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
