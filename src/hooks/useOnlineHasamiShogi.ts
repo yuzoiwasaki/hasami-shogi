@@ -15,13 +15,14 @@ import { useGameTimer } from './useGameTimer';
 import { useGameSync } from './useGameSync';
 
 export const useOnlineHasamiShogi = () => {
+  // ========================================
+  // メインフックと状態管理
+  // ========================================
   const {
     room,
     isFirstPlayer,
     leaveRoom,
   } = useGameRoomContext();
-
-
 
   const [board, setBoard] = useState<Board>(createInitialBoard);
   const [selectedCell, setSelectedCell] = useState<Position | null>(null);
@@ -30,6 +31,9 @@ export const useOnlineHasamiShogi = () => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [countdown, setCountdown] = useState<number>(10);
 
+  // ========================================
+  // 外部フックの使用
+  // ========================================
   // 時間管理フックを使用
   const {
     getTimeDisplay,
@@ -44,6 +48,9 @@ export const useOnlineHasamiShogi = () => {
     deleteRoom,
   } = useGameSync({ room });
 
+  // ========================================
+  // ゲームロジック関数群
+  // ========================================
   const resetGameState = useCallback(() => {
     setBoard(createInitialBoard());
     setCurrentPlayer('歩');
@@ -52,55 +59,9 @@ export const useOnlineHasamiShogi = () => {
     setError(null);
   }, []);
 
-  // roomの状態が変更されたら同期
-  useEffect(() => {
-    if (room) {
-      // 入室直後の場合は盤面をリセット
-      if (room.gameState.status === 'waiting') {
-        const initialBoard = createInitialBoard();
-        // 直接Firebaseを更新
-        update(ref(db, `rooms/${room.id}/gameState`), {
-          board: initialBoard,
-          currentTurn: '歩',
-          status: 'waiting',
-          isFirstPlayerTurn: true,
-        });
-        resetGameState();
-        return;
-      }
-
-      // ゲームが実際に開始された時（二人目のプレイヤーが入室した時）
-      if (room.gameState.status === 'playing' && 
-          room.gameState.firstPlayerId && 
-          room.gameState.secondPlayerId && 
-          !room.gameState.lastMoveTime) {
-        // 部屋の設定から初期時間を取得
-        const roomConfig = SHOGI_ROOMS.find((r) => r.id === room.id);
-        const initialTime = roomConfig?.initialTime ?? DEFAULT_TIME;
-        
-        // lastMoveTimeを設定してゲーム開始
-        update(ref(db, `rooms/${room.id}/gameState`), {
-          lastMoveTime: Date.now(),
-          firstPlayerTime: initialTime,
-          secondPlayerTime: initialTime,
-        });
-        return;
-      }
-
-      const newBoard = convertToBoard(room.gameState.board);
-      setBoard(newBoard);
-      setCurrentPlayer(room.gameState.currentTurn);
-    }
-  }, [room?.gameState.board, room?.gameState.currentTurn, room?.gameState.status, 
-      room?.gameState.firstPlayerId, room?.gameState.secondPlayerId, room?.gameState.lastMoveTime]);
-
   const isMyTurn = room ? (
     (isFirstPlayer && currentPlayer === '歩') || (!isFirstPlayer && currentPlayer === 'と')
   ) : true;
-
-  const getPlayerName = (piece: Player) => {
-    return piece === '歩' ? '先手' : '後手';
-  };
 
   const handleGameEnd = useCallback((winner: '歩' | 'と') => {
     setWinner(winner);
@@ -201,35 +162,29 @@ export const useOnlineHasamiShogi = () => {
       console.error('Error handling cell click:', error);
       setError(createGameError(GameErrorCode.INVALID_MOVE));
     }
-  }, [room, board, currentPlayer, selectedCell, isMyTurn, handleGameEnd, isFirstPlayer]);
+  }, [room, board, currentPlayer, selectedCell, isMyTurn, handleGameEnd, isFirstPlayer, calculatePlayerTimes, updateGameState]);
 
+  const resign = async () => {
+    if (!room || room.gameState.status !== 'playing' || isFirstPlayer === null || !isMyTurn) return;
+    const winner: Player = isFirstPlayer ? 'と' : '歩';
+    
+    // 投了時の状態を更新（Firebaseのデータベースを直接更新）
+    await updateGameState({
+      board,
+      currentTurn: winner,
+      status: 'finished',
+      winner,
+    });
 
+    handleGameEnd(winner);
+  };
 
-  // 勝利判定（入室直後はスキップ）
-  useEffect(() => {
-    if (!room || room.gameState.status === 'waiting' || winner) return;
-
-    // Firebaseからの勝利状態の監視
-    if (room.gameState.status === 'finished' && room.gameState.winner) {
-      handleGameEnd(room.gameState.winner);
-    }
-  }, [handleGameEnd, room?.gameState.status, room?.gameState.winner, winner]);
-
-  // 時間切れの判定
-  useEffect(() => {
-    if (!room || room.gameState.status !== 'playing') return;
-
-    if (isTimeUp()) {
-      const winner = room.gameState.currentTurn === '歩' ? 'と' : '歩';
-      handleGameEnd(winner);
-      setError(createGameError(GameErrorCode.TIME_UP));
-
-      // 時間切れの場合も部屋を削除
-      setTimeout(async () => {
-        await deleteRoom();
-      }, 10000);
-    }
-  }, [room, isTimeUp, handleGameEnd]);
+  // ========================================
+  // UIヘルパー関数群
+  // ========================================
+  const getPlayerName = (piece: Player) => {
+    return piece === '歩' ? '先手' : '後手';
+  };
 
   const getPlayerRole = () => {
     if (isFirstPlayer === null || !room) return null;
@@ -249,21 +204,80 @@ export const useOnlineHasamiShogi = () => {
     return roomInfo?.name ?? room.id;
   };
 
-  const resign = async () => {
-    if (!room || room.gameState.status !== 'playing' || isFirstPlayer === null || !isMyTurn) return;
-    const winner: Player = isFirstPlayer ? 'と' : '歩';
-    
-    // 投了時の状態を更新（Firebaseのデータベースを直接更新）
-    await updateGameState({
-      board,
-      currentTurn: winner,
-      status: 'finished',
-      winner,
-    });
+  // ========================================
+  // 副作用（useEffect）群
+  // ========================================
+  // roomの状態が変更されたら同期
+  useEffect(() => {
+    if (room) {
+      // 入室直後の場合は盤面をリセット
+      if (room.gameState.status === 'waiting') {
+        const initialBoard = createInitialBoard();
+        // 直接Firebaseを更新
+        update(ref(db, `rooms/${room.id}/gameState`), {
+          board: initialBoard,
+          currentTurn: '歩',
+          status: 'waiting',
+          isFirstPlayerTurn: true,
+        });
+        resetGameState();
+        return;
+      }
 
-    handleGameEnd(winner);
-  };
+      // ゲームが実際に開始された時（二人目のプレイヤーが入室した時）
+      if (room.gameState.status === 'playing' && 
+          room.gameState.firstPlayerId && 
+          room.gameState.secondPlayerId && 
+          !room.gameState.lastMoveTime) {
+        // 部屋の設定から初期時間を取得
+        const roomConfig = SHOGI_ROOMS.find((r) => r.id === room.id);
+        const initialTime = roomConfig?.initialTime ?? DEFAULT_TIME;
+        
+        // lastMoveTimeを設定してゲーム開始
+        update(ref(db, `rooms/${room.id}/gameState`), {
+          lastMoveTime: Date.now(),
+          firstPlayerTime: initialTime,
+          secondPlayerTime: initialTime,
+        });
+        return;
+      }
 
+      const newBoard = convertToBoard(room.gameState.board);
+      setBoard(newBoard);
+      setCurrentPlayer(room.gameState.currentTurn);
+    }
+  }, [room?.gameState.board, room?.gameState.currentTurn, room?.gameState.status, 
+      room?.gameState.firstPlayerId, room?.gameState.secondPlayerId, room?.gameState.lastMoveTime, resetGameState, convertToBoard]);
+
+  // 勝利判定（入室直後はスキップ）
+  useEffect(() => {
+    if (!room || room.gameState.status === 'waiting' || winner) return;
+
+    // Firebaseからの勝利状態の監視
+    if (room.gameState.status === 'finished' && room.gameState.winner) {
+      handleGameEnd(room.gameState.winner);
+    }
+  }, [handleGameEnd, room, winner]);
+
+  // 時間切れの判定
+  useEffect(() => {
+    if (!room || room.gameState.status !== 'playing') return;
+
+    if (isTimeUp()) {
+      const winner = room.gameState.currentTurn === '歩' ? 'と' : '歩';
+      handleGameEnd(winner);
+      setError(createGameError(GameErrorCode.TIME_UP));
+
+      // 時間切れの場合も部屋を削除
+      setTimeout(async () => {
+        await deleteRoom();
+      }, 10000);
+    }
+  }, [room, isTimeUp, handleGameEnd, deleteRoom, setError]);
+
+  // ========================================
+  // 戻り値
+  // ========================================
   return {
     board,
     selectedCell,
